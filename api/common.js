@@ -422,7 +422,7 @@ exports.generateQuery = function(str) {
     let result=stopwords.cleanText(str).split(' ').filter(e => String(e).trim());
     if(result.length == 0) return null;
     result = result.map((word) => `W='${word}'`).join(',');
-    return "OR("+result+")"
+    return "And(OR("+result+"),Composite(F.FN=='neuroscience'))"
 }
 
 exports.updateProjectMag = function(project, cb) {
