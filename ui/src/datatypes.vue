@@ -10,9 +10,6 @@
     <div class="page-content" ref="scrolled">
         <div class="header">
                 <h2>Datatypes</h2>
-                <p style="opacity: 0.7;">
-                    Datatypes allow Apps to exchange data. Please visit <a href="https://app.slack.com/client/T3X5ND3U1/C946FA6PK">#datatype slack channel</a> to register new datatypes.
-                </p>
         </div>
         <div v-if="!filtered.length && query.length">
             <h3 style="opacity: 0.8; margin: 40px;" variant="secondary">No matching Datatypes</h3>
