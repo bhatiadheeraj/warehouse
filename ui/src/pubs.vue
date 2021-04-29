@@ -15,6 +15,9 @@
         </div>
         <b-container>
             <div v-if="!pubs" style="margin: 40px;"><h3>Loading ..</h3></div>
+            <div v-if="!filtered.length && query.length">
+                <p style="opacity: 0.5; margin: 20px; font-size: 120%;">No matching Publications</p>
+            </div>
             <div v-else style="margin: 10px 0px;">
                 <div v-for="pub in getPubs()" :key="pub._id" style="margin-bottom: 30px; box-shadow: 1px 1px 4px #9996">
                     <pubcard :pub="pub"/>
@@ -98,6 +101,9 @@ export default {
                     pub.name,
                     pub.desc,
                 ];
+                pub.tags.forEach(tag=>{
+                    stuff.push(tag);
+                });
                 const text = stuff.filter(thing=>!!thing).join(" ").toLowerCase();
                 return tokens.every(token=>text.includes(token));
             });
