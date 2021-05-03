@@ -423,7 +423,9 @@ exports.load_github_detail = function(service_name, cb) {
 exports.generateQuery = function(str) {
     const alphastr = str.replace(/[^a-z ]/gi, "");
     const cleanstr = stopwords.cleanText(alphastr);
-    const queries = cleanstr.split(' ').filter(e=>!!e).map(word=>`W='${word}'`);
+    const queries = cleanstr.split(' ').filter(e=>!!e)
+                    .map(e=>e.toLowerCase()).filter((w,i,self)=>self.indexOf(w) == i)
+                    .filter(w=>w.length != 1).map(word=>`W='${word}'`);
     if(queries.length == 0) return null;
     return "And(OR("+queries.join(',')+"),Composite(F.FN=='neuroscience'))"
 }
