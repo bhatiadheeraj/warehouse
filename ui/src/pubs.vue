@@ -104,6 +104,11 @@ export default {
                 pub.tags.forEach(tag=>{
                     stuff.push(tag);
                 });
+                if(pub.authors.length) {
+                    pub.authors.forEach(author=>{
+                        stuff.push(author.fullname);
+                    });
+                }
                 const text = stuff.filter(thing=>!!thing).join(" ").toLowerCase();
                 return tokens.every(token=>text.includes(token));
             });
