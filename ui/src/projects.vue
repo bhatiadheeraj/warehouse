@@ -81,13 +81,12 @@ import Vue from 'vue'
 import pageheader from '@/components/pageheader'
 import projectcard from '@/components/projectcard'
 import project from '@/components/project'
-import { FacebookLoader } from 'vue-content-loader'
 
 
 let query_debounce;
 
 export default {
-    components: { projectcard, project, FacebookLoader },
+    components: { projectcard, project },
     data () {
         return {   
             projects: null, //all projects
