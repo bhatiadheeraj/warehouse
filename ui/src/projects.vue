@@ -8,7 +8,9 @@
         </div>
     </div>
     <div v-if="!projects" style="margin: 40px; opacity: 0.5; margin-top: 50px;">
-        <h3><icon name="cog" spin scale="2"/> Loading ...</h3>
+        <div class="placeholder-item"></div>
+        <div class="placeholder-item"></div>
+        <div class="placeholder-item"></div>
     </div>
 
     <div class="mode-toggler onRight" v-if="projects">
@@ -31,12 +33,14 @@
                 <div v-for="project in projects.filter(p=>p._mine)" :key="project._id"
                     ref="project" :id="project._id" class="projectcard-holder">
                     <projectcard :project="project" v-if="project._visible"/>
+                    <div v-else class="placeholder-item"></div>
                 </div>
             </div>
             <div style="padding: 10px;" v-if="mode == 'list'">
                 <div v-for="project in projects.filter(p=>p._mine)" :key="project._id" 
                     ref="project" :id="project._id" class="project-holder">
                     <project :project="project" v-if="project._visible"/>
+                    <div v-else class="placeholder-item"></div>
                 </div>
             </div>
             <p v-if="projects.filter(p=>p._mine).length == 0 && query == ''" style="margin: 20px;">
@@ -52,12 +56,14 @@
                 <div v-for="project in projects.filter(p=>!p._mine)" :key="project._id"
                     ref="project" :id="project._id" class="projectcard-holder">
                     <projectcard :project="project" v-if="project._visible"/>
+                    <div v-else class="placeholder-item"></div>
                 </div>
             </div>
             <div style="padding: 10px;" v-if="mode == 'list'">
                 <div v-for="project in projects.filter(p=>!p._mine)" :key="project._id" 
                     ref="project" :id="project._id" class="project-holder">
-                    <project :project="project" v-if="project._visible"/>
+                        <project :project="project" v-if="project._visible"/>
+                        <div v-else class="placeholder-item"></div>
                 </div>
             </div>
             <br clear="both">
@@ -75,11 +81,13 @@ import Vue from 'vue'
 import pageheader from '@/components/pageheader'
 import projectcard from '@/components/projectcard'
 import project from '@/components/project'
+import { FacebookLoader } from 'vue-content-loader'
+
 
 let query_debounce;
 
 export default {
-    components: { projectcard, project },
+    components: { projectcard, project, FacebookLoader },
     data () {
         return {   
             projects: null, //all projects
@@ -140,6 +148,7 @@ export default {
             //load all projects that user has summary access (including removed ones so we can open it)
             this.my_projects = null;
             this.projects = null;
+            setTimeout(() => {
             this.$http.get('project', {params: {
                 find: JSON.stringify({$and: ands}),
                 limit: 500, //TODO implement paging eventually
@@ -165,6 +174,7 @@ export default {
                 this.$notify({type: 'error', text: err.response.data.message()});
                 this.projects = [];
             });
+        },3000);
         },
 
         change_query_debounce() {
@@ -229,5 +239,31 @@ transition: box-shadow 0.5s;
 }
 .projectcard:hover {
 box-shadow: 2px 2px 8px rgba(0,0,0,0.3);
+}
+.placeholder-item {
+    box-shadow: 0 4px 10px 0 rgba(33, 33, 33, 0.15);
+    border-radius: 4px;
+    height: 80px;
+    position: relative;
+    overflow: hidden;
+    margin: 15px;}
+.placeholder-item::before {
+    content: '';
+    display: block;
+    position: absolute;
+    left: -150px;
+    top: 0;
+    height: 100%;
+    width: 150px;
+    background: linear-gradient(to right, transparent 0%, #E8E8E8 50%, transparent 100%);
+    animation: load 1s cubic-bezier(0.4, 0.0, 0.2, 1) infinite;
+}
+@keyframes load {
+    from {
+        left: -150px;
+    }
+    to   {
+        left: 100%;
+    }
 }
 </style>
