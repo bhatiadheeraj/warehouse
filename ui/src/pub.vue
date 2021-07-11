@@ -262,7 +262,11 @@
                         </b-col>
                         <b-col>
                             <div v-for="funding in pub.fundings" :key="funding._id" class="funder">
-                                <div v-if="funding.funder == 'NSF'" class="funder-label bg-success">NSF</div>
+
+                                <a v-if="funding.funder == 'NSF'" v-bind:href="'https://www.nsf.gov/awardsearch/showAward?AWD_ID='+funding.id">
+                                    <div class="funder-label bg-success">NSF</div>
+                                    {{funding.id}}
+                                </a>
                                 <div v-else-if="funding.funder == 'NIH'" class="funder-label bg-info">NIH</div>
                                 <div v-else class="funder-label bg-warning">{{funding.funder}}</div>
                                 {{funding.id}}
