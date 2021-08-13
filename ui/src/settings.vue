@@ -245,9 +245,10 @@
                     </b-form>
                 </b-container>
                 <br>
+                <h5>Connected Accounts</h5>
+                <hr>
                 Please visit the legacy <a href="/auth/#!/settings/account" target="_blank">Account Settings</a> page for more account settings.
             </div>
-
             <!--notification-->
             <div v-if="tab == 2">
                 <b-form @submit="submit_profile">
