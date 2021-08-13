@@ -79,6 +79,27 @@
                 </b-table>
             </div>
         </b-tab>
+        <b-tab title="Users" lazy>
+            <b-container>
+                <b-row>
+                    <b-col>
+                        <br>
+                        <h5>Users</h5>
+                            <b-form-input v-model="queryUser" type="text" placeholder="Search Users" @input="changeQueryDebounceUser" class="input"/>
+                            <b-table :tbody-tr-class="rowClass" ref="userTable" striped hover small
+                            :items="loadUsers()" 
+                            :fields="fields" 
+                            :per-page="perPage" 
+                            :current-page="currentPage" 
+                            @row-clicked="selectUser"/>
+                            <b-pagination v-model="currentPage" :total-rows="rowUsers" :per-page="perPage" aria-controls="my-table"></b-pagination>
+                            <p class="mt-3">Current Page: {{ currentPage }}</p>
+                    </b-col>
+                    <b-col>
+                    </b-col>
+                </b-row>
+            </b-container>
+        </b-tab>
     </b-tabs>
 </div>
 </template>
@@ -125,6 +146,18 @@ export default {
                 { key: "users", label: "Users", sortable: true },
                 { key: "resourcesCount", label: "Resources", sortable: true },
             ],
+            users: [],
+            queryUser: "", 
+            queryGroup: "",
+            filteredUsers: [],
+            filteredGroups: [],
+            groups: [],
+            fields: ["fullname", "username", "active", "email"],
+            groupfields: ["name", "active"],
+            perPage: 100,
+            userEdit: null,
+            groupEdit: null,
+            currentPage: 1,
         }
     },
 
@@ -266,6 +299,33 @@ export default {
                     Object.assign(this.task, event.msg);
                 }
             }
+        },
+        loadUsers() {
+            if(!this.users.length) {
+                this.$http.get(Vue.config.auth_api+"/users").then(res=>{
+                    this.users = res.data;
+                }).catch(err=>{
+                    console.error(err.response);
+                    this.$notify({type: "error", text: err});
+                });
+            }
+            if(this.queryUser.length) return this.filteredUsers;
+            return this.users;
+        },
+        rowClass(item, type) {
+            if (!item || type !== 'row') return;
+            // if (item._id == this.userEdit._id || this.groupEdit._id == item._id) return 'table-success'
+            if(this.userEdit && this.userEdit._id == item._id) return 'table-primary';
+            if(this.groupEdit && this.groupEdit._id == item._id) return 'table-primary';
+        },
+        selectUser(user) {
+            this.userEdit = Object.assign({}, this.userEdit, user);
+            this.profile = JSON.stringify(user.profile, null, 4);
+            this.scopes = JSON.stringify(user.scopes, null, 4);
+            this.openids = user.ext.openids[0] || " ";
+        },
+        selectGroup(group) {
+            this.groupEdit = Object.assign({}, this.groupEdit, group);
         },
     },
 }
