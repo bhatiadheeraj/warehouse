@@ -96,6 +96,51 @@
                             <p class="mt-3">Current Page: {{ currentPage }}</p>
                     </b-col>
                     <b-col>
+                        <div v-if="userEdit">
+                            <b-form @submit="submitUser">
+                                <b-container>
+                                    <b-form-group>
+                                        <b-row>
+                                            <b-col cols="6">
+                                                <span class="form-header">Profile</span>
+                                                <editor v-model="profile" @init="editorInit" lang="json" height="300"/>
+                                                        <!-- <b-form-textarea v-if="userEdit.profile" v-model="userEdit.profile" rows="8"/> -->
+                                            </b-col>
+                                            <b-col cols="6">
+                                                <span class="form-header">Scope</span>
+                                                <editor v-model="scopes" @init="editorInit" lang="json" height="300"/>
+                                                        <!-- <b-form-textarea v-if="userEdit.scopes" v-model="userEdit.scopes" rows="8"/> -->
+                                            </b-col>
+                                            <b-col cols="12">
+                                                <br>
+                                                <b-form-checkbox v-model="userEdit.active">Active</b-form-checkbox>
+                                                <span class="form-header">Full Name</span>
+                                                <b-form-input v-if="userEdit.fullname" v-model="userEdit.fullname"/>
+                                                <br>
+                                                <span class="form-header">Username</span>
+                                                <b-form-input v-if="userEdit.username" v-model="userEdit.username"/>
+                                                <br>
+                                                <span class="form-header">Email</span>
+                                                <b-form-input v-if="userEdit.email" v-model="userEdit.email"/>
+                                                <b-form-checkbox v-model="userEdit.email_confirmed">Confirmed</b-form-checkbox>
+                                                <hr>
+                                                <span class="form-header">Google ID</span>
+                                                <b-form-input v-if="userEdit.ext" v-model="userEdit.ext.googleid"/>
+                                                <span class="form-header">Open ID</span>
+                                                <b-form-input v-if="openids" v-model="openids"/>
+                                                <span class="form-header">Orcid</span>
+                                                <b-form-input v-if="userEdit.ext" v-model="userEdit.ext.orcid"/>
+                                                <span class="form-header">Github</span>
+                                                <b-form-input v-if="userEdit.ext" v-model="userEdit.ext.github"/>
+                                                <hr>
+                                                <pre>{{userEdit.times}}</pre>
+                                            </b-col>
+                                        </b-row>
+                                    </b-form-group>
+                                            <b-button type="submit" variant="success">Submit</b-button>
+                                </b-container>
+                            </b-form>
+                        </div>
                     </b-col>
                 </b-row>
             </b-container>
@@ -134,7 +179,8 @@ const numeral = require('numeral');
 export default {
     components: { 
         task,
-        ExportablePlotly: ()=>import('@/components/ExportablePlotly')
+        ExportablePlotly: ()=>import('@/components/ExportablePlotly'),
+        editor: ()=>import('vue2-ace-editor'),
     },
     data () {
         return {
@@ -177,6 +223,9 @@ export default {
             perPage: 100,
             userEdit: null,
             groupEdit: null,
+            profile: null,
+            scopes: null,
+            openids : null,
             currentPage: 1,
         }
     },
@@ -322,6 +371,7 @@ export default {
         },
         loadUsers() {
             if(!this.users.length) {
+                console.log("LOADING USERS");
                 this.$http.get(Vue.config.auth_api+"/users").then(res=>{
                     this.users = res.data;
                 }).catch(err=>{
@@ -358,6 +408,7 @@ export default {
             this.userEdit = Object.assign({}, this.userEdit, user);
             this.profile = JSON.stringify(user.profile, null, 4);
             this.scopes = JSON.stringify(user.scopes, null, 4);
+            this.userEdit._index = this.users.indexOf(user);
             this.openids = user.ext.openids[0] || " ";
         },
         selectGroup(group) {
@@ -405,6 +456,25 @@ export default {
                 return tokens.every(token=>text.includes(token));
             });
         },
+        submitUser(e) {
+            e.preventDefault();
+            this.userEdit.profile = JSON.parse(this.profile||"{}");
+            this.userEdit.scopes = JSON.parse(this.scopes||"{}");
+            this.userEdit.ext.openids[0] = this.openids;
+            this.$http.put(Vue.config.auth_api+"/user/"+this.userEdit.sub,this.userEdit).then(res=>{
+                this.$notify({type: "success", text: res.data.message});
+                // this.users[this.userEdit._index] = this.userEdit;
+                Vue.set(this.users, this.userEdit._index, this.userEdit);
+                this.userEdit = null;
+                this.scopes = null;
+                this.profile = null;
+            }).catch(console.error);
+        },
+        editorInit(editor) {
+            require('brace/mode/json')
+            editor.container.style.lineHeight = 1.25;
+            editor.renderer.updateFontSize();
+        }
     },
     computed: {
         rowUsers() {
