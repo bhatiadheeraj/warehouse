@@ -100,6 +100,25 @@
                 </b-row>
             </b-container>
         </b-tab>
+        <b-tab title="Groups" lazy>
+            <b-container>
+                <b-row>
+                    <b-col>
+                        <h5>Groups <span style="float: right"><b-button v-on:click="initGroup()">Create Group</b-button></span></h5>
+                        <b-form-input v-model="queryGroup" type="text" placeholder="Search Groups" @input="changeQueryDebounceGroup" class="input"/>
+                        <b-table :tbody-tr-class="rowClass" ref="groupTable" striped hover small 
+                        :items="loadGroups()" 
+                        :fields="groupfields" 
+                        :per-page="perPage" 
+                        :current-page="currentPage"  
+                        @row-clicked="selectGroup"/>
+                        <b-pagination v-model="currentPage" :total-rows="rowGroups" :per-page="perPage" aria-controls="my-table"></b-pagination>
+                        <p class="mt-3">Current Page: {{ currentPage }}</p>
+                    </b-col>
+                    <b-col></b-col>
+                </b-row>
+            </b-container>
+        </b-tab>
     </b-tabs>
 </div>
 </template>
@@ -108,7 +127,8 @@
 import Vue from 'vue'
 import task from '@/components/task'
 import ReconnectingWebSocket from 'reconnectingwebsocket'
-
+let queryDebounceUser;
+let queryDebounceGroup;
 const numeral = require('numeral');
 
 export default {
@@ -312,6 +332,22 @@ export default {
             if(this.queryUser.length) return this.filteredUsers;
             return this.users;
         },
+        loadGroups() {
+            if(!this.groups.length) {
+                this.$http.get(Vue.config.auth_api+"/groups").then(res=>{
+                    this.groups = res.data;
+                    this.groups.forEach(group=>{
+                        if(group.admins) group.admins = group.admins.map(admins=>admins.sub);
+                        if(group.members) group.members = group.members.map(members=>members.sub);
+                    });
+                }).catch(err=>{
+                    console.error(err.response);
+                    this.$notify({type: "error", text: err});
+                });
+            }
+            if(this.queryGroup.length) return this.filteredGroups;
+            return this.groups;
+        },
         rowClass(item, type) {
             if (!item || type !== 'row') return;
             // if (item._id == this.userEdit._id || this.groupEdit._id == item._id) return 'table-success'
@@ -327,7 +363,65 @@ export default {
         selectGroup(group) {
             this.groupEdit = Object.assign({}, this.groupEdit, group);
         },
+        changeQueryDebounceUser() {
+            clearTimeout(queryDebounceUser);
+            queryDebounceUser = setTimeout(this.changeQueryUser, 300);        
+        },
+        changeQueryDebounceGroup() {
+            clearTimeout(queryDebounceGroup);
+            queryDebounceGroup = setTimeout(this.changeQueryGroup,300);
+        },
+        changeQueryUser() {
+            if(!this.users) return setTimeout(this.changeQueryUser, 300);
+            sessionStorage.setItem("user.query", this.queryUser);
+            this.applyFilterUser();
+        },
+        changeQueryGroup() {
+            if(!this.groups) return setTimeout(this.changeQueryGroup,300);
+            sessionStorage.setItem("group.query", this.queryGroup);
+            this.applyFilterGroup();
+        },
+        applyFilterUser() {
+            let tokens = this.queryUser.toLowerCase().split(" ");
+            this.filteredUsers = this.users.filter(user=>{
+                let stuff = [
+                    user.fullname,
+                    user.username,
+                    user.email
+                ];
+                const text = stuff.filter(thing=>!!thing).join(" ").toLowerCase();
+                return tokens.every(token=>text.includes(token));
+            });
+
+        },
+        applyFilterGroup() {
+            let tokens = this.queryGroup.toLowerCase().split(" ");
+            this.filteredGroups = this.groups.filter(group=>{
+                let stuff = [
+                    group.name,
+                    group.description,
+                ];
+                const text = stuff.filter(thing=>!!thing).join(" ").toLowerCase();
+                return tokens.every(token=>text.includes(token));
+            });
+        },
     },
+    computed: {
+        rowUsers() {
+            return this.users.length;
+        },
+        rowGroups() {
+            return this.groups.length;
+        }
+    },
+    watch: {
+        queryUser : function() {
+            this.applyFilterUser();
+        },
+        queryGroup: function() {
+            this.applyFilterGroup();
+        }
+    }
 }
 </script>
 
