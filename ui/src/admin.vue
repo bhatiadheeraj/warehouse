@@ -160,7 +160,24 @@
                         <b-pagination v-model="currentPage" :total-rows="rowGroups" :per-page="perPage" aria-controls="my-table"></b-pagination>
                         <p class="mt-3">Current Page: {{ currentPage }}</p>
                     </b-col>
-                    <b-col></b-col>
+                    <b-col>
+                        <b-form v-if="groupEdit" @submit="submitGroup">
+                            <b-row>
+                                <b-col cols="12">
+                                    <span class="form-header">Name</span>
+                                    <b-form-input v-if="groupEdit.name" v-model="groupEdit.name"/>
+                                    <span class="form-header">Description</span>
+                                    <b-form-textarea v-if="groupEdit.desc" v-model="groupEdit.desc" rows="8"/>
+                                    <span class="form-header">Members</span>
+                                    <contactlist type="text" v-if="groupEdit.members" v-model="groupEdit.members"></contactlist>
+                                    <span class="form-header">Admins</span>
+                                    <contactlist v-if="groupEdit.admins" v-model="groupEdit.admins"></contactlist>
+                                    <b-form-checkbox v-model="groupEdit.active">Active</b-form-checkbox>
+                                </b-col>
+                            </b-row>
+                            <b-button type="submit" variant="success">Submit</b-button>
+                            </b-form>
+                    </b-col>
                 </b-row>
             </b-container>
         </b-tab>
@@ -181,6 +198,7 @@ export default {
         task,
         ExportablePlotly: ()=>import('@/components/ExportablePlotly'),
         editor: ()=>import('vue2-ace-editor'),
+        contactlist: ()=>import('@/components/contactlist'),
     },
     data () {
         return {
@@ -413,6 +431,7 @@ export default {
         },
         selectGroup(group) {
             this.groupEdit = Object.assign({}, this.groupEdit, group);
+            this.groupEdit._index = this.groups.indexOf(group);
         },
         changeQueryDebounceUser() {
             clearTimeout(queryDebounceUser);
@@ -470,10 +489,34 @@ export default {
                 this.profile = null;
             }).catch(console.error);
         },
+        submitGroup(e) {
+            e.preventDefault();
+            if(this.groupEdit.id) {
+                this.$http.put(Vue.config.auth_api+"/group/"+this.groupEdit.id,this.groupEdit).then(res=>{
+                    this.$notify({type: "success", text: res.data.message});
+                }).catch(console.error);
+                console.log("Editing the group"+this.groupEdit);
+                Vue.set(this.groups,this.groupEdit._index,this.groupEdit);                
+            } else {
+                this.$http.post(Vue.config.auth_api+"/group/",this.groupEdit).then(res=>{
+                    this.$notify({type: "success", text: res.data.message});
+                }).catch(console.error);
+                this.groups.push(this.groupEdit);
+            }
+            this.groupEdit = null;
+        },
         editorInit(editor) {
             require('brace/mode/json')
             editor.container.style.lineHeight = 1.25;
             editor.renderer.updateFontSize();
+        },
+        initGroup() {
+            this.groupEdit = {
+                name: " ",
+                desc: " ",
+                members: [],
+                admins: [],
+            }
         }
     },
     computed: {
