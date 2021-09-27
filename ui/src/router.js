@@ -197,10 +197,6 @@ export default new Router({
             sidemenu: "setting",       
         }},
 
-        {path: '/settings/:tab?', component: settings, meta: {
-            sidemenu: "setting",       
-        }},
-
 
         {path: '/test', component: test, meta: {
             sidemenu: null,
