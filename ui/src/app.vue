@@ -459,15 +459,14 @@ export default {
     watch: {
         '$route': function() {
             var app_id = this.$route.params.id;
+            this.handleRouteParams();
             if(app_id && this.app && app_id != this.app._id) {
                 this.open_app();
-            } else {
-                this.handleRouteParams();
-            }
+            } 
         },
         tab: function() {
-            console.log(this.$route.params.tab,this.tabs[this.tab].id);
             if(this.$route.params.tab != this.tabs[this.tab].id) {
+                console.log("MOving");
                 this.$router.replace("/app/"+this.app._id+"/"+this.tabs[this.tab].id);
             }
         },
