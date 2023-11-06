@@ -73,7 +73,12 @@ export default {
 
     watch: {
         tab: function() {
-            this.$router.replace("/settings/"+this.tabIndices[this.tab]);
+            console.log("tab changed", this.tab, "route", this.$route);
+            let redirectURL = "/settings/"+this.tabIndices[this.tab];
+            if(this.$route.query) redirectURL += "?"+this.$route.query.map((q)=>{
+                return q.key+"="+q.value;
+            }).join("&");
+            this.$router.replace(redirectURL);
         },
     },
 }

@@ -96,6 +96,7 @@
 <script>
 
 import Vue from 'vue'
+import router from '@/router'
 
 export default {
     components: { 
@@ -128,6 +129,15 @@ export default {
                 },
                 times: {}
             },
+        }
+    },
+    created() {
+        const errorMessage = this.$route.query.errorMessage;
+        const successMessage = this.$route.query.successMessage;
+        if(errorMessage) {
+            this.$notify({type: "error", text: errorMessage});
+        } else if(successMessage) {
+            this.$notify({type: "success", text: successMessage});
         }
     },
 
