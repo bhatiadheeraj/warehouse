@@ -34,7 +34,7 @@
                 </div>
             </b-container>
         </div>
-        <b-button v-if="config.user" class="button-fixed" @click="go('/organization/_/edit')">
+        <b-button v-if="config.user" class="button-fixed" @click="navigateToNewOrganization">
             New Organization
         </b-button>
     </div>
@@ -86,6 +86,9 @@ export default {
         clearQuery: function() {
             this.query = "";
             this.filtered = this.organizations;
+        },
+        navigateToNewOrganization: function() {
+            this.$router.push('/organization/_/edit');
         }
     }
 }
