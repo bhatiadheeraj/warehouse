@@ -96,8 +96,8 @@ Vue.filter('filesize', function (num) {
 Vue.filter('capitalize', v => v.toUpperCase())
 Vue.filter('formatNumber', v => numeral(v).format('0,0'))
 
-// const host = process.env.HOSTNAME || window.location.hostname
-const host = "www.localhost:8080"
+const host = process.env.HOSTNAME || window.location.hostname
+// const host = "www.localhost:8080" //for testing with orcid login, we need to use localhost, but for github and google we need not to use www
 console.log("Host", host)
 const httpProtocol = location.protocol
 const wsProtocol = httpProtocol === 'https:' ? 'wss:' : 'ws:'
