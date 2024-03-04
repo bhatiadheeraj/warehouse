@@ -89,7 +89,8 @@ export default {
                 roles: [
                     {
                         role: "admin",
-                        members: [Vue.config.user.sub]
+                        members: [parseInt(Vue.config.user.sub, 10)] // Convert to integer                    },
+
                     },
                     {
                         role: "member",
@@ -105,13 +106,20 @@ export default {
     methods: {
         submit(event) {
             event.preventDefault();
+            // Convert members to integer
+            const organizationPayload = {
+                ...this.organization,
+                roles: this.organization.roles.map(role => ({
+                    ...role,
+                    members: role.members.map(member => parseInt(member, 10)) // Ensure members are integers
+                }))
+            };
+
             if(this.$route.params.id == "_") {
-                this.$http.post(Vue.config.auth_api+'/organization/create', this.organization).then(res => {
-                    console.log(res);
+                this.$http.post(Vue.config.auth_api+'/organization/create', organizationPayload).then(res => {
                 })
             } else {
-                this.$http.put(Vue.config.auth_api+'/organization/'+this.$route.params.id, this.organization).then(res => {
-                    console.log(res);
+                this.$http.put(Vue.config.auth_api+'/organization/'+this.$route.params.id, organizationPayload).then(res => {
                 })
             }
             this.$router.push('/organization/'+res.data._id)
