@@ -205,54 +205,6 @@
                             </b-col>
                         </b-row>
 
-                        <div v-if="project.xnat.enabled" style="background-color: #eee; padding: 10px; border-radius: 10px">
-                            <span class="form-header">XNAT Integration</span>
-                            <p>
-                                <small>Data Archive on this project is mapped to the XNAT instance</small>
-                            </p>
-                            <b-row>
-                                <b-col sm="3"><span class="form-sub-header">XNAT Hostname</span></b-col>
-                                <b-col><pre>{{project.xnat.hostname}}</pre></b-col>
-                            </b-row>
-                            <br>
-                            <b-row>
-                                <b-col sm="3"><span class="form-sub-header">XNAT Project</span></b-col>
-                                <b-col><b>{{project.xnat.project}}</b></b-col>
-                            </b-row>
-                            <br>
-                            <b-row>
-                                <b-col sm="3"><span class="form-sub-header">SCAN Mapping</span></b-col>
-                                <b-col>
-                                    <b-row>
-                                        <b-col>
-                                            <small>XNAT Scan</small>
-                                        </b-col>
-                                        <b-col sm="1"> </b-col>
-                                        <b-col>
-                                            <small>Brainlife Datatype</small>
-                                        </b-col>
-                                    </b-row>
-                                    <hr style="margin: 5px;">
-                                    <b-row v-for="(map, idx) in project.xnat.scans" :key="idx">
-                                        <b-col>
-                                            <b>{{map.scan}}</b>
-                                        </b-col>
-                                        <b-col sm="1"> ➜ </b-col>
-                                        <b-col>
-                                            <datatypetag :datatype="map.datatype" :tags="map.datatype_tags"/>
-                                        </b-col>
-                                    </b-row>
-
-                                    <br>
-                                    <p>
-                                        <small>brainlife.io will perodically crawl XNAT and update object listed in archive. If you'd like to load the objects now, please click this button.</small><br>
-                                        <b-button size="sm" @click="loadXNATObjects">Load Objects</b-button>
-                                    </p>
-                                </b-col>
-                            </b-row>
-                        </div>
-                        <br>
-
                         <b-tabs class="brainlife-tab sub-tab" v-model="detailTab">
                             <b-tab title="README" active/>
                             <b-tab>
@@ -841,15 +793,6 @@ export default {
             case "failed": return "danger";
             default: return "dark";
             }
-        },
-
-        loadXNATObjects() {
-            this.$root.$emit("loading",{message: "Loading XNAT Objects"});
-            this.$http.post("/xnat/load/"+this.project._id).then(res=>{
-                this.$root.$emit("loading", {show: false});
-                this.$notify({ text: "Loaded "+res.data.length+" objects" });
-                console.dir(res);
-            });
         },
     },
 }

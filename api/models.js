@@ -162,40 +162,6 @@ var projectSchema = mongoose.Schema({
     //project can store datasets on project specific storage. {resource_id}
     //storage: String,  //default to warehouse config.archive.storage_default
     //storage_config: mongoose.Schema.Types.Mixed, 
-    
-    //experimental
-    xnat: {
-        enabled: { type: Boolean, default: false },
-
-        hostname: String,
-        token: String,
-        secret: String, //TODO - we need to encrypt this
-        tokenUpdated: Date, //when the token was updated
-
-        project: String, //XNAT project to map to
-
-        //scan / datatype mapping
-        scans: [
-            {
-                scan: String,  //"type" field in scan object
-                /*
-                 * "scan" object from xnat
-                  {
-                    xsiType: 'xnat:mrScanData',
-                    xnat_imagescandata_id: '768',
-                    note: '',
-                    series_description: '',
-                    ID: '4',
-                    type: 'EP2D_3iso_p2_S37',
-                    URI: '/data/experiments/XNAT19_E00030/scans/4',
-                    quality: ''
-                  },
-                */
-                datatype: {type: mongoose.Schema.Types.ObjectId, ref: 'Datatypes'},
-                datatype_tags: [String],
-            }
-        ],
-    },
 
     //describes how all pipeline rules are organized
     pipelines: mongoose.Schema.Types.Mixed, //TODO dangerous..

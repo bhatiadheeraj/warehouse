@@ -43,7 +43,6 @@ router.use('/rule', require('./rule'));
 router.use('/datalad', require('./datalad'));
 router.use('/participant', require('./participant'));
 router.use('/secondary', require('./secondary'));
-router.use('/xnat', require('./xnat'));
 
 module.exports = router;
 
