@@ -34,7 +34,6 @@ router.get('/health', (req, res, next)=>{
 });
 
 router.use('/project', require('./project'));
-router.use('/comment', require('./comment'));
 router.use('/dataset', require('./dataset'));
 router.use('/app', require('./app'));
 router.use('/pub', require('./pub'));

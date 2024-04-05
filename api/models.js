@@ -128,9 +128,6 @@ var projectSchema = mongoose.Schema({
                 config: mongoose.Schema.Types.Mixed,
             }]
         },
-
-        //number of comments on this project
-        comments: Number,
     },
 
     //quota: {type: Number, default: 1000000000000}, //maximum archive size (1TB by default)
@@ -865,20 +862,4 @@ var dlItemSchema = mongoose.Schema({
 });
 dlItemSchema.index({'dldataset': 1, 'dataset.datatype': 1, 'dataset.meta.subject': 1, 'dataset.meta.session': 1, 'dataset.meta.run': 1}); //importdatlad uses this as *key* for each item
 exports.DLItems = mongoose.model('DLItems', dlItemSchema);
-
-var commentSchema = mongoose.Schema({
-    comment: String,
-    user_id: String, //sub of the user    
-    //one of the following should be set
-    project: {type: mongoose.Schema.Types.ObjectId, ref: 'Projects'},
-    //if this comment pertains to a project, this is set
-    pub: {type: mongoose.Schema.Types.ObjectId, ref: 'Publication'},
-    //if this comment pertains to an app, this is et
-    create_date: {type: Date, default: Date.now},
-    update_date: { type: Date, default: Date.now },
-    //let user "edit" comment, and if it's edited, this is set.
-    removed: { type: Boolean, default: false },
-});
-
-exports.Comments = mongoose.model('Comments', commentSchema);
 

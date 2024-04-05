@@ -1193,7 +1193,6 @@ exports.update_project_stats = async function(project, cb) {
 
         //lad number of publications
         let publications = await db.Publications.countDocuments({project});
-        let comments = await db.Comments.count({project: project._id, removed: false});
 
         //now update the record!
         let newproject = await db.Projects.findOneAndUpdate({_id: project._id}, {$set: {
@@ -1203,7 +1202,6 @@ exports.update_project_stats = async function(project, cb) {
             "stats.publications": publications,
             "stats.instances": instance_counts,
             "stats.groupanalysis": groupanalysis,
-            "stats.comments": comments,
         }}, {new: true});
 
         //only publish some stats that UI wants to receive
@@ -1212,7 +1210,6 @@ exports.update_project_stats = async function(project, cb) {
             instances: instance_counts,
             groupanalysis, //object..
             publications,
-            comments,
         }})
 
         if(cb) cb(null, newproject);

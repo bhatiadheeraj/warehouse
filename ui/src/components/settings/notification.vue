@@ -14,21 +14,6 @@
                 </p>
             </b-col>
         </b-row>
-
-        <h5>Notification Events</h5>
-        <b-row>
-            <b-col cols="3">
-                <span class="form-header">New Comments</span>
-            </b-col>
-            <b-col cols="7">
-                <b-form-checkbox v-model="profile.private.notifyCommentEmail">
-                    Send email when new comments are posted to project that I am a member, or I follow.
-                </b-form-checkbox>
-            </b-col>
-        </b-row>
-        <br>
-        <br>
-        <br>
         
         <h5>Sounds</h5>
         <b-row>
