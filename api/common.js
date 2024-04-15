@@ -1326,12 +1326,10 @@ exports.users_general = async ()=>{
 }
 
 exports.getOrganization = async (id) => {
-    console.log("loading organization", id);
     try {
         const response = await axios.get(config.auth.api + "/organization/" + id, {
             headers: { authorization: "Bearer "+config.warehouse.jwt }, //config.auth.jwt is deprecated
         });
-        console.log("organization loaded", response.data);
         return response.data;
     } catch (error) {
         console.error("Failed to load organization", error);
