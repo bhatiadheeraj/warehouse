@@ -73,7 +73,6 @@ export default {
             select: '-readme', //ignore some heavy stuff
         }})
         .then(res=>{
-            console.log(res.data);
             this.organizations = res.data;
         }, res=>{
             console.error(res);
@@ -90,7 +89,6 @@ export default {
                 this.filtered = this.organizations.filter(organization=>{
                     return organization.name.toLowerCase().includes(this.query.toLowerCase());
                 });
-                console.log(this.filtered);
             } else {
                 this.filtered = this.organizations;
             }

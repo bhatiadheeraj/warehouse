@@ -258,7 +258,6 @@ export default {
         },
         async loadOrg() {
             await this.axios.get(Vue.config.auth_api+'/organization/'+this.$route.params.id).then((res) => {
-                console.log(res.data);
                 this.organization = res.data
             }).catch((err) => {
                 this.error = err.response.data.error
@@ -403,7 +402,6 @@ export default {
 
         findRole(user) {
             if(this.isOwner(user)) {
-                console.log('owner');
                 return 'owner';
             }
             if(this.isAdmin(user)) return 'admin';
