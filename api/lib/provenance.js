@@ -58,10 +58,6 @@ exports.traverseProvenance = async (startTaskId) => {
             }
         };
         switch(dataset.storage){
-        case "xnat":
-            //XNAT dataset contains auth object with user/pass. watch out!
-            node.storageLocation = dataset.storage_config.url;
-            break;
         case "datalad":
             //storage_config.files[].src contain full path.. but maybe too verbose
             node.storageLocation = dataset.storage_config.path;
@@ -477,7 +473,7 @@ exports.setupShortcuts = (prov)=>{
     } 
 
     //TODO
-    //I think this is dangerous.. there could be multpile edges with the same from/to
+    //I think this is dangerous.. there could be multiple edges with the same from/to
     //I think it's safer to just return the edge itself, and let caller specifically use that edge.idx
     //for shortcut array 
     function findEdgeIdx(from, to) {

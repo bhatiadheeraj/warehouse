@@ -132,9 +132,6 @@ var projectSchema = mongoose.Schema({
                 config: mongoose.Schema.Types.Mixed,
             }]
         },
-
-        //number of comments on this project
-        comments: Number,
     },
 
     //quota: {type: Number, default: 1000000000000}, //maximum archive size (1TB by default)
@@ -169,40 +166,6 @@ var projectSchema = mongoose.Schema({
     //project can store datasets on project specific storage. {resource_id}
     //storage: String,  //default to warehouse config.archive.storage_default
     //storage_config: mongoose.Schema.Types.Mixed, 
-    
-    //experimental
-    xnat: {
-        enabled: { type: Boolean, default: false },
-
-        hostname: String,
-        token: String,
-        secret: String, //TODO - we need to encrypt this
-        tokenUpdated: Date, //when the token was updated
-
-        project: String, //XNAT project to map to
-
-        //scan / datatype mapping
-        scans: [
-            {
-                scan: String,  //"type" field in scan object
-                /*
-                 * "scan" object from xnat
-                  {
-                    xsiType: 'xnat:mrScanData',
-                    xnat_imagescandata_id: '768',
-                    note: '',
-                    series_description: '',
-                    ID: '4',
-                    type: 'EP2D_3iso_p2_S37',
-                    URI: '/data/experiments/XNAT19_E00030/scans/4',
-                    quality: ''
-                  },
-                */
-                datatype: {type: mongoose.Schema.Types.ObjectId, ref: 'Datatypes'},
-                datatype_tags: [String],
-            }
-        ],
-    },
 
     //describes how all pipeline rules are organized
     pipelines: mongoose.Schema.Types.Mixed, //TODO dangerous..
@@ -869,20 +832,4 @@ var dlItemSchema = mongoose.Schema({
 });
 dlItemSchema.index({'dldataset': 1, 'dataset.datatype': 1, 'dataset.meta.subject': 1, 'dataset.meta.session': 1, 'dataset.meta.run': 1}); //importdatlad uses this as *key* for each item
 exports.DLItems = mongoose.model('DLItems', dlItemSchema);
-
-var commentSchema = mongoose.Schema({
-    comment: String,
-    user_id: String, //sub of the user    
-    //one of the following should be set
-    project: {type: mongoose.Schema.Types.ObjectId, ref: 'Projects'},
-    //if this comment pertains to a project, this is set
-    pub: {type: mongoose.Schema.Types.ObjectId, ref: 'Publication'},
-    //if this comment pertains to an app, this is et
-    create_date: {type: Date, default: Date.now},
-    update_date: { type: Date, default: Date.now },
-    //let user "edit" comment, and if it's edited, this is set.
-    removed: { type: Boolean, default: false },
-});
-
-exports.Comments = mongoose.model('Comments', commentSchema);
 

@@ -34,7 +34,6 @@ router.get('/health', (req, res, next)=>{
 });
 
 router.use('/project', require('./project'));
-router.use('/comment', require('./comment'));
 router.use('/dataset', require('./dataset'));
 router.use('/app', require('./app'));
 router.use('/pub', require('./pub'));
@@ -44,7 +43,6 @@ router.use('/rule', require('./rule'));
 router.use('/datalad', require('./datalad'));
 router.use('/participant', require('./participant'));
 router.use('/secondary', require('./secondary'));
-router.use('/xnat', require('./xnat'));
 
 module.exports = router;
 
