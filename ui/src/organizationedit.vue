@@ -6,9 +6,6 @@
 
                 <b-tabs class="brainlife-tab" v-model="tab">
                     <b-tab title="Detail"/>
-                    <b-tab title="Access Control"/>
-                    <b-tab title="Storage / Archive"/>
-                    <b-tab title="Resources"/>                    
                 </b-tabs>
             </b-container>
         </div>
@@ -22,29 +19,6 @@
                         <b-form-group label="Description">
                             <b-form-textarea v-model="organization.description"/>
                         </b-form-group>
-                        <b-form-group label="Avatar">
-                            <b-form-input v-model="organization.logo"/>
-                        </b-form-group>
-                </div>
-                <div v-if="tab == 1">
-                    <br/>
-                    <b-row>
-                        <b-col cols="3">
-                            <span class="form-header">Administrators</span>
-                        </b-col>
-                        <b-col cols="9">
-                            <contactlist v-model="organization.roles[0].members"/>
-                            <p class="text-muted"><small>Users who can update the organization metadata, projects, resources and archive</small></p>
-                        </b-col>
-
-                        <b-col cols="3">
-                            <span class="form-header">Members</span>
-                        </b-col>
-                        <b-col cols="9">
-                            <contactlist v-model="organization.roles[1].members"/>
-                            <p class="text-muted"><small>Users who can be part of the projects and utilize organization's resources and archive</small></p>
-                        </b-col>
-                    </b-row>
                 </div>
             </b-container>
         <div class="page-footer">
@@ -81,7 +55,7 @@ export default {
         if(this.$route.params.id == "_"){
             this.organization = {
                 name: "",
-                owner: Vue.config.user.sub,
+                owner: Vue.config.user.id,
                 description: "",
                 url: "",
                 logo: "",
@@ -89,7 +63,7 @@ export default {
                 roles: [
                     {
                         role: "admin",
-                        members: [parseInt(Vue.config.user.sub, 10)] // Convert to integer                    },
+                        members: [Vue.config.user.id]
 
                     },
                     {
@@ -104,25 +78,18 @@ export default {
         }
     },
     methods: {
-        submit(event) {
+        async submit(event) {
             event.preventDefault();
-            // Convert members to integer
-            const organizationPayload = {
-                ...this.organization,
-                roles: this.organization.roles.map(role => ({
-                    ...role,
-                    members: role.members.map(member => parseInt(member, 10)) // Ensure members are integers
-                }))
-            };
 
             if(this.$route.params.id == "_") {
-                this.$http.post(Vue.config.auth_api+'/organization/create', organizationPayload).then(res => {
+                await this.$http.post(Vue.config.auth_api+'/organization/create', this.organization).then(res => {
+                    this.$router.push('/organization/'+res.data._id)
                 })
             } else {
-                this.$http.put(Vue.config.auth_api+'/organization/'+this.$route.params.id, organizationPayload).then(res => {
+                this.$http.put(Vue.config.auth_api+'/organization/'+this.$route.params.id, this.organization).then(res => {
+                    this.$router.push('/organization/'+this.$route.params.id)
                 })
             }
-            this.$router.push('/organization/'+res.data._id)
         },
         cancel() {
             this.$router.push('/organization/'+this.$route.params.id)

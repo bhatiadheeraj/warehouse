@@ -33,6 +33,8 @@ var projectSchema = mongoose.Schema({
 
     group_id: {type: Number, unique: true} , //group id from auth service to host admins/members
 
+    organization: String, //organization that this project belongs to (if set, project is listed under this organization)
+
     name: String,
     desc: String, 
 
@@ -44,6 +46,8 @@ var projectSchema = mongoose.Schema({
     //access control 
     //* private - only the project member can access
     //* public - accessible by anyone
+    //* public_for_org - accessible by anyone in the organization
+
     access: {type: String, default: "private" },
 
     //for a private project, list it for everyone to see the summary

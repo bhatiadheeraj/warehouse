@@ -1,9 +1,9 @@
 <template>
 <v-select v-if="profiles"
-    v-model.sync="values" 
-    :options="profiles" 
-    :reduce="p=>p.sub" 
-    label="label" 
+    v-model.sync="values"
+    :options="profiles"
+    :reduce="p=>p.sub"
+    label="label"
     multiple/>
 </template>
 
@@ -14,7 +14,16 @@ import Vue from 'vue'
 let profilesCache = null;
 
 export default {
-    props: ['value'],
+    props: {
+        value: {
+            type: Array,
+            default: () => [],
+        },
+        filteredIds: {
+            type: Array,
+            default: () => null,
+        },
+    },
     data () {
         return {
             values: [],
@@ -40,20 +49,23 @@ export default {
         //TODO I should let ui-select/async and let it "search" users
         if(!profilesCache) profilesCache = this.$http.get(Vue.config.auth_api+'/profile/list', {params: {
             find: JSON.stringify({active: true}),
-            limit: 5000, 
+            limit: 5000,
         }});
 
         profilesCache.then(res=>{
             this.profiles = [];
             res.data.profiles.forEach(profile=>{
-                //auth service still uses number for sub, but we should eventually convert it 
-                //to use string warehouse stores sub in string.
-                //let's operate using string across all other services
                 this.profiles.push({
-                    sub: profile.sub.toString(), 
+                    sub: profile.sub.toString(),
                     label: profile.fullname + " <"+profile.email+">",
+                    id: profile._id.toString(),
                 });
             });
+
+            if (this.filteredIds) {
+                this.profiles = this.profiles.filter(p => this.filteredIds.includes(p.id));
+            }
+
         }, res=>{
             console.error(res);
         });

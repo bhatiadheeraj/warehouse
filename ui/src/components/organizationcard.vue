@@ -4,7 +4,7 @@
             <b-col cols="2">
                 <appavatar :app="organization" />
             </b-col>
-            <b-col cols="10">
+            <b-col cols="8">
                 <h4 style="margin-top: 20px">{{organization.name}}</h4>
             </b-col>
         </b-row>
@@ -25,7 +25,7 @@ export default {
     methods: {
         click() {
             if(this.clickable) {
-                this.$router.push({name: 'organization', params: {organizationid: this.organization._id}});
+                this.$router.push('/organization/'+this.organization._id);
             }
         }
     }

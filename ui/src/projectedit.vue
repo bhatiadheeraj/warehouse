@@ -47,6 +47,17 @@
                     </b-col>
                 </b-row>
 
+                <b-row v-if="organizations && organizations.length">
+                    <b-col cols="3">
+                        <span class="form-header">Organization</span>
+                    </b-col>
+                    <b-col cols="9">
+                        <b-form-select v-if="organizations && organizations.length" v-model="project.organization" :options="organizations.map(org=>{return {text: org.name, value: org._id}})"/>
+                    </b-col>
+                </b-row>
+
+                <br/>
+
                 <b-row>
                     <b-col cols="3">
                         <span class="form-header">Avatar</span>
@@ -88,6 +99,14 @@
                                 <b-form-radio value="private">Private</b-form-radio> <br>
                                 <small class="text-muted">Only the members of project can access datasets. Guest users has read access to the datasets.</small>
                            </p>
+
+                           <p v-if="project.organization">
+                                <b-form-radio value="public_for_org">Public For Organization</b-form-radio> <br>
+                                <small class="text-muted">
+                                    The project will be accessible to all users in the organization. Only the members of project can update datasets. Guest users has read access to the datasets.
+                                </small>
+                           </p>
+
                         </b-form-radio-group>
                         <p>
                             <b-form-checkbox v-if="project.access == 'private'" style="margin-left: 30px;" v-model="project.listed">List project summary for all users</b-form-checkbox>
@@ -126,7 +145,17 @@
                         <span class="form-header">Administrators</span>
                     </b-col> 
                     <b-col cols="9">
-                        <contactlist v-model="project.admins"/>
+
+                        {{ organizations}}
+                        {{ project.organization  }}
+                        <contactlist
+                            v-if="organizations && organizations.length && project.organization"
+                            v-model="project.admins"
+                            :filteredIds="getMemberIDSofORG"
+                        />
+
+                        <contactlist v-else v-model="project.admins"/>
+
                         <p class="text-muted"><small>Users who can update the project metadata, and groups</small></p>
                     </b-col>
                 </b-row>
@@ -136,7 +165,14 @@
                         <span class="form-header">Members</span>
                     </b-col> 
                     <b-col cols="9">
-                        <contactlist v-model="project.members"/>
+                        <contactlist
+                        v-if="organizations && organizations.length && project.organization"
+                        v-model="project.members"
+                        :filteredIds="getMemberIDSofORG"
+                        />
+
+                        <contactlist v-else v-model="project.members"/>
+
                         <p class="text-muted"><small>Users who can update datasets in this project. Also for a private project: Users who can run Apps registered on this project.</small></p>     
                     </b-col>
                 </b-row>
@@ -146,7 +182,13 @@
                         <span class="form-header">Guests</span>
                     </b-col> 
                     <b-col cols="9">
-                        <contactlist v-model="project.guests"/>
+                        <contactlist
+                        v-if="organizations && organizations.length && project.organization"
+                        v-model="project.guests"
+                        :filteredIds="getMemberIDSofORG"
+                        />
+                        <contactlist v-else v-model="project.guests"/>
+
                         <p class="text-muted"><small>For Private project, users who has read access to datasets.</small></p>
                     </b-col>
                 </b-row>
@@ -311,6 +353,7 @@ import tageditor from '@/components/tageditor'
 import datatypes from '@/mixins/datatypes'
 import { Picker } from 'emoji-mart-vue'
 import { brainlife_dua } from "@/assets/consents.js";
+import Contactlist from './components/contactlist.vue'
 
 const lib = require('@/lib');
 
@@ -330,6 +373,7 @@ export default {
         emojimart: Picker,
 
         editor: require('vue2-ace-editor'),
+        Contactlist
     },
 
     data() {
@@ -349,6 +393,7 @@ export default {
             tab: 0,
 
             config: Vue.config,
+            organizations: [],
         }
     },
 
@@ -445,12 +490,32 @@ export default {
                     },
                 };
 
+                if (this.$route.query.organization) {
+                    this.project.organization = this.$route.query.organization;
+                }
+
                 this.participants = JSON.stringify(participants_def, null, 4);
                 this.participants_columns = JSON.stringify(participants_columns_def, null, 4);
             }
         });
-
+        this.listOrganizations();
     },
+
+    computed: {
+    getMemberIDSofORG() {
+        if (!this.project || !this.project.organization) {
+            return [];
+        }
+
+        let org = this.organizations.find(org => org._id === this.project.organization);
+
+        if (org && org.roles) {
+            return org.roles.flatMap(role => role.members);
+        }
+        return [];
+    }
+},
+
 
     methods: {
 
@@ -573,6 +638,13 @@ export default {
             if(type == 'brainlife_dua') this.project.agreements.push({
                 agreement: brainlife_dua,
             })
+        },
+        async listOrganizations() {
+            this.organizations = this.$http.get(Vue.config.auth_api+'/organization', {params: {
+                find: JSON.stringify({}),
+            }}).then(res=>{
+                this.organizations = res.data;
+            });
         },
     },
 }

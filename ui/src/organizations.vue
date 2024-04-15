@@ -9,6 +9,14 @@
         </div>
         <div class="page-content">
             <b-container>
+                <div v-if="invites.length && !query">
+                    <br/>
+                    <h3>Invitations</h3>
+                    <div v-for="invite in invites" :key="invite.id">
+                        <invitecard :invitation="invite" />
+                    </div>
+
+                </div>
                 <div v-if="!organizations" style="margin: 40px">
                     <h3>Loading ..</h3>
                 </div>
@@ -43,15 +51,18 @@
 <script>
 import Vue from 'vue'
 import organizationcard from '@/components/organizationcard'
+import invitecard from '@/components/invitecard.vue'
+
 let queryDebounce;
 export default {
-    components: { organizationcard },
+    components: { organizationcard, invitecard },
     data () {
         return {
             organizations: [],
             config: Vue.config,
             query: "",
             filtered : [],
+            invites: [],
         }
     },
     created: function() {
@@ -67,6 +78,7 @@ export default {
         }, res=>{
             console.error(res);
         });
+        this.loadInvites();
     },
     methods: {
         changeQueryDebounce: function() {
@@ -89,6 +101,14 @@ export default {
         },
         navigateToNewOrganization: function() {
             this.$router.push('/organization/_/edit');
+        },
+        async loadInvites() {
+            try {
+                let res = await this.$http.get(Vue.config.auth_api+'/organization/invitations/'+Vue.config.user.id);
+                this.invites = res.data.filter(invite=>invite.status == "Pending" && new Date(invite.invitationExpiration) > new Date());
+            } catch(err) {
+                console.error(err);
+            }
         }
     }
 }

@@ -1191,11 +1191,9 @@ exports.update_project_stats = async function(project, cb) {
             });
         });
 
-        //lad number of publications
         let publications = await db.Publications.countDocuments({project});
         let comments = await db.Comments.count({project: project._id, removed: false});
 
-        //now update the record!
         let newproject = await db.Projects.findOneAndUpdate({_id: project._id}, {$set: {
             "stats.rules": rules, 
             "stats.resources": resource_stats, 
@@ -1206,7 +1204,6 @@ exports.update_project_stats = async function(project, cb) {
             "stats.comments": comments,
         }}, {new: true});
 
-        //only publish some stats that UI wants to receive
         exports.publish("project.update.warehouse."+project._id, {stats: {
             rules, //counts..
             instances: instance_counts,
@@ -1285,6 +1282,13 @@ exports.isadmin = (user, rec)=>{
     return false;
 }
 
+exports.isblAdmin = (user)=>{
+    if(user) {
+        if(user.scopes.warehouse && ~user.scopes.warehouse.indexOf('admin')) return true;
+    }
+    return false;
+}
+
 exports.isguest = (user, rec)=> {
     if(user) {
         if(user.scopes.warehouse && ~user.scopes.warehouse.indexOf('admin')) return true;
@@ -1320,6 +1324,53 @@ exports.users_general = async ()=>{
         console.error(err);
     }
 }
+
+exports.getOrganization = async (id) => {
+    console.log("loading organization", id);
+    try {
+        const response = await axios.get(config.auth.api + "/organization/" + id, {
+            headers: { authorization: "Bearer "+config.warehouse.jwt }, //config.auth.jwt is deprecated
+        });
+        console.log("organization loaded", response.data);
+        return response.data;
+    } catch (error) {
+        console.error("Failed to load organization", error);
+        throw error;
+    }
+};
+
+
+exports.isOrgAdmin = (user, org) => {
+    if (!org || !user) {
+        console.error("Invalid organization or user:", org, user);
+        return false;
+    }
+    const adminRole = org.roles.find(role => role.role === 'admin');
+
+    if (adminRole && Array.isArray(adminRole.members) && adminRole.members.includes(user.id)) {
+        return true;
+    }
+    if (org.owner && org.owner.toString() === user.id) {
+        return true;
+    }
+    return false;
+};
+
+
+exports.isOrgMember = (user, org) => {
+    if (!org || !user) {
+        console.error("Invalid organization or user:", org, user);
+        return false;
+    }
+
+    const memberRole = org.roles.find(role => role.role === 'member');
+
+    if (memberRole && Array.isArray(memberRole.members) && memberRole.members.includes(user.id)) {
+        return true;
+    }
+
+    return false;
+};
 
 
 exports.cast_mongoid = function(node) {
