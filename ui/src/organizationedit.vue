@@ -82,7 +82,7 @@ export default {
             event.preventDefault();
 
             if(this.$route.params.id == "_") {
-                await this.$http.post(Vue.config.auth_api+'/organization/create', this.organization).then(res => {
+                this.$http.post(Vue.config.auth_api+'/organization/create', this.organization).then(res => {
                     this.$router.push('/organization/'+res.data._id)
                 })
             } else {

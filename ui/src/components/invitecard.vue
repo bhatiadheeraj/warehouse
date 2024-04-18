@@ -9,7 +9,7 @@
                     <p v-if="inviterDetails"><strong>Invited By:</strong> {{ inviterDetails.fullname }} ({{ inviterDetails.email }})</p>
 
                     <p><strong style="color:red">
-                    {{ computeExpiry(invitation.invitationExpiration) }}</strong>
+                    {{ computeExpiration(invitation.invitationExpiration) }}</strong>
                     </p>
 
                 </b-col>
@@ -73,7 +73,9 @@ export default {
                 response: true
             });
 
-            if (res.status !== 200 && res.data.message !== 'User answered the invitation') {
+            console.log(res);
+
+            if (res.status != 201) {
                 this.$bvToast.toast('Failed to accept invitation', {
                     title: 'Error',
                     variant: 'danger',
@@ -101,7 +103,7 @@ export default {
                 autoHideDelay: 5000
             });
         },
-        computeExpiry(date) {
+        computeExpiration(date) {
             return `Expires on ${new Date(date).toDateString()}`;
         },
     }

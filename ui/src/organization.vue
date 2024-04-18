@@ -257,11 +257,8 @@ export default {
             }
         },
         async loadOrg() {
-            await this.axios.get(Vue.config.auth_api+'/organization/'+this.$route.params.id).then((res) => {
-                this.organization = res.data
-            }).catch((err) => {
-                this.error = err.response.data.error
-            })
+            const res = await this.$http.get(Vue.config.auth_api+'/organization/'+this.$route.params.id);
+            this.organization = res.data;
         },
         isExpired(expiryDate) {
             return new Date(expiryDate) < new Date();
@@ -272,8 +269,8 @@ export default {
         checkCancellable(invite) {
             return Boolean(invite.status !== 'Pending' || this.isExpired(invite.invitationExpiration));
         },
-        async cancelInvite(invite) {
-            await this.$http.post(`${Vue.config.auth_api}/organization/${this.organization._id}/invite/cancel`,{
+        cancelInvite(invite) {
+            this.$http.post(`${Vue.config.auth_api}/organization/${this.organization._id}/invite/cancel`,{
                 invitee: invite.invitee,
             }).then(res=>{
                 this.$bvToast.toast(`Invite has been cancelled`, {
@@ -283,7 +280,6 @@ export default {
                 });
 
                 this.loadInvites();
-
             }).catch(res=>{
                 console.error(res);
                 this.$bvToast.toast(`Failed to cancel invite`, {
@@ -296,7 +292,7 @@ export default {
         getCountofMembers() {
             return this.organization.roles.reduce((acc, role) => acc + role.members.length, 0);
         },
-        async loadProjects() {
+        loadProjects() {
             this.$http.get('project/organization/'+this.organization._id, {params: {
                     select: 'name desc avatar group_id stats.datasets stats.instances create_date admins members guests access',
                 }}).then(res=>{
@@ -305,8 +301,8 @@ export default {
                     console.error(res);
             });
         },
-        async loadInvites() {
-            await this.$http.get(Vue.config.auth_api+'/organization/'+this.organization._id+'/invitations').then(async res=>{
+        loadInvites() {
+            this.$http.get(Vue.config.auth_api+'/organization/'+this.organization._id+'/invitations').then(async res=>{
                 this.invites = res.data;
                 for (const invite of this.invites) {
                     
@@ -328,7 +324,7 @@ export default {
                     expiry: invite.invitationExpiration,
                     inviterName: invite.inviterDetails.fullname || invite.inviterDetails.username,
                 }));
-            }, res=>{
+            }).catch(res=>{
                 console.error(res);
             });
         },
@@ -350,13 +346,8 @@ export default {
         },
 
         change_query() {
-            if(this.query) {
-                this.filtered = this.projects.filter(project=>{
-                    return project.name.toLowerCase().includes(this.query.toLowerCase());
-                });
-            } else {
-                this.filtered = this.projects;
-            }
+            if(this.query) this.filtered = this.projects.filter(project=> project.name.toLowerCase().includes(this.query.toLowerCase()));
+            else this.filtered = this.projects;
         },
 
         async loadProfiles(ids) {
@@ -441,7 +432,7 @@ export default {
             this.$router.push('/project/_/edit?organization='+this.organization._id);
         },
         async inviteUser({ user, role }) {
-            await this.$http.post(Vue.config.auth_api+'/organization/'+this.organization._id+'/invite', {
+            this.$http.post(Vue.config.auth_api+'/organization/'+this.organization._id+'/invite', {
                 invitee: user._id,
                 role: role,
             }).then(res=>{
@@ -449,8 +440,8 @@ export default {
                 title: 'Invitation sent',
                 variant: 'success',
                 solid: true,
-            });
-            }, res=>{
+                });
+            }).catch(res=>{
                 console.error(res);
                 this.$bvToast.toast(`Failed to invite user ${user.username} as ${role}`, {
                 title: 'Error',
@@ -469,7 +460,7 @@ export default {
             return expiryDate < new Date();
         },
         async removeMember(userId) {
-            this.$bvModal.msgBoxConfirm('Are you sure you want to remove this member? This action cannot be undone.', {
+            this.$bvModal.msgBoxConfirm('Are you sure you want to remove this member?', {
                 title: 'Remove Member',
                 size: 'sm',
                 buttonSize: 'sm',

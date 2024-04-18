@@ -18,10 +18,10 @@
 
                 </div>
                 <div v-if="!organizations" style="margin: 40px">
-                    <h3>Loading ..</h3>
+                    <h3>Loading ...</h3>
                 </div>
                 <div v-if="!organizations.length && query">
-                    <p style="opacity: 0.5; margin: 20px; font-size: 120%;">No matching organizations</p>
+                    <p style="opacity: 0.5; margin: 20px; font-size: 120%;">No organizations</p>
                 </div>
 
                 <div v-if="!organizations.length && !query">
@@ -70,7 +70,6 @@ export default {
             find: JSON.stringify({ 
                 removed: false 
             }),
-            select: '-readme', //ignore some heavy stuff
         }})
         .then(res=>{
             this.organizations = res.data;

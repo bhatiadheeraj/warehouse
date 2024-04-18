@@ -146,12 +146,10 @@
                     </b-col> 
                     <b-col cols="9">
 
-                        {{ organizations}}
-                        {{ project.organization  }}
                         <contactlist
                             v-if="organizations && organizations.length && project.organization"
                             v-model="project.admins"
-                            :filteredIds="getMemberIDSofORG"
+                            :filteredIds="getMemberIdsOfOrg"
                         />
 
                         <contactlist v-else v-model="project.admins"/>
@@ -168,7 +166,7 @@
                         <contactlist
                         v-if="organizations && organizations.length && project.organization"
                         v-model="project.members"
-                        :filteredIds="getMemberIDSofORG"
+                        :filteredIds="getMemberIdsOfOrg"
                         />
 
                         <contactlist v-else v-model="project.members"/>
@@ -185,7 +183,7 @@
                         <contactlist
                         v-if="organizations && organizations.length && project.organization"
                         v-model="project.guests"
-                        :filteredIds="getMemberIDSofORG"
+                        :filteredIds="getMemberIdsOfOrg"
                         />
                         <contactlist v-else v-model="project.guests"/>
 
@@ -502,7 +500,7 @@ export default {
     },
 
     computed: {
-    getMemberIDSofORG() {
+    getMemberIdsOfOrg() {
         if (!this.project || !this.project.organization) {
             return [];
         }

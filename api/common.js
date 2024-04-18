@@ -1339,34 +1339,17 @@ exports.getOrganization = async (id) => {
 
 
 exports.isOrgAdmin = (user, org) => {
-    if (!org || !user) {
-        console.error("Invalid organization or user:", org, user);
-        return false;
-    }
     const adminRole = org.roles.find(role => role.role === 'admin');
 
-    if (adminRole && Array.isArray(adminRole.members) && adminRole.members.includes(user.id)) {
-        return true;
-    }
-    if (org.owner && org.owner.toString() === user.id) {
-        return true;
-    }
+    if (adminRole && adminRole.members.includes(user.id)) return true;
+    if (org.owner.toString() === user.id) return true;
     return false;
 };
 
 
 exports.isOrgMember = (user, org) => {
-    if (!org || !user) {
-        console.error("Invalid organization or user:", org, user);
-        return false;
-    }
-
     const memberRole = org.roles.find(role => role.role === 'member');
-
-    if (memberRole && Array.isArray(memberRole.members) && memberRole.members.includes(user.id)) {
-        return true;
-    }
-
+    if (memberRole && memberRole.members.includes(user.id)) return true;
     return false;
 };
 
