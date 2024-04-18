@@ -27,7 +27,7 @@
                 <b-row>
                     <b-col cols="3">
                         <span class="form-header">Name *</span>
-                    </b-col> 
+                    </b-col>
                     <b-col cols="9">
                         <b-input type="text" v-model="project.name" placeholder="Project Name" required/>
                         <br>
@@ -37,7 +37,7 @@
                 <b-row>
                     <b-col cols="3">
                         <span class="form-header">Description *</span>
-                    </b-col> 
+                    </b-col>
                     <b-col cols="9">
                         <p style="position: relative">
                             <span @click="showMart = true" style="position: absolute; top: 10px; right: 10px; cursor: pointer;">😋</span>
@@ -61,7 +61,7 @@
                 <b-row>
                     <b-col cols="3">
                         <span class="form-header">Avatar</span>
-                    </b-col> 
+                    </b-col>
                     <b-col cols="9">
                         <b-input type="text" v-model.trim="project.avatar" placeholder="Image URL for the project avatar (if not set, randomly generate)"/>
                         <p class="text-muted"><small>You can try choosing an image from websites like https://picsart.com/</small></p>
@@ -71,7 +71,7 @@
                 <b-row>
                     <b-col cols="3">
                         <span class="form-header">README</span>
-                    </b-col> 
+                    </b-col>
                     <b-col cols="9">
                         <b-form-textarea :rows="4" :max-rows="20" v-model="project.readme" placeholder="Enter extended README content"/>
                         <p>
@@ -88,7 +88,7 @@
                 <b-row>
                     <b-col cols="3">
                         <span class="form-header">Access Policy</span>
-                    </b-col> 
+                    </b-col>
                     <b-col cols="9">
                         <b-form-radio-group v-model="project.access">
                             <p>
@@ -117,7 +117,7 @@
                 <b-row>
                     <b-col cols="3">
                         <span class="form-header">DATA USE AGREEMENT</span>
-                    </b-col> 
+                    </b-col>
                     <b-col cols="9">
                         <p class="text-muted"><small>List of agreements that user must agree before accessing datasets stored on this project</small></p>
                         <b-row v-for="(agreement, idx) in project.agreements" :key="idx">
@@ -143,7 +143,7 @@
                 <b-row>
                     <b-col cols="3">
                         <span class="form-header">Administrators</span>
-                    </b-col> 
+                    </b-col>
                     <b-col cols="9">
 
                         <contactlist
@@ -161,7 +161,7 @@
                 <b-row>
                     <b-col cols="3">
                         <span class="form-header">Members</span>
-                    </b-col> 
+                    </b-col>
                     <b-col cols="9">
                         <contactlist
                         v-if="organizations && organizations.length && project.organization"
@@ -178,7 +178,7 @@
                 <b-row>
                     <b-col cols="3">
                         <span class="form-header">Guests</span>
-                    </b-col> 
+                    </b-col>
                     <b-col cols="9">
                         <contactlist
                         v-if="organizations && organizations.length && project.organization"
@@ -221,69 +221,6 @@
 
             <!--resources-->
             <div v-if="tab == 3">
-                <h5>Storage</h5>
-                <p><small>You can import and store data on remote storage systems instead of using brainlife's default storage.</small></p>
-                <b-form-checkbox v-model="project.xnat.enabled">Integrate with XNAT</b-form-checkbox>
-                <p>
-                    <small>Data on this project can be populated from the existing XNAT project. Any new data derivatives will be stored on this XNAT project.</small>
-                </p>
-                <div v-if="project.xnat.enabled" style="margin-left: 30px;">
-                    <b-form-group label="XNAT Hostname">
-                        <b-input type="text" v-model="project.xnat.hostname" placeholder="https://example.xnat.com" required/>
-                    </b-form-group>
-                    <b-form-group label="XNAT Project Name">
-                        <b-input type="text" v-model="project.xnat.project" required/>
-                    </b-form-group>
-
-                    <p style="background-color: #eee; padding: 10px;">
-                        <small>Please issue access token/secret on your XNAT project to allow access from brianlife. Brainlife will automatically refresh your token periodically.</small>
-                        <b-form-group label="Access Token / Alias">
-                            <b-input type="text" v-model="project.xnat.token" required/>
-                        </b-form-group>
-                        <b-form-group label="Secret">
-                            <b-input type="password" v-model="project.xnat.secret" required/>
-                        </b-form-group>
-                        <b-button size="sm" @click="testXnat">Test</b-button>
-                        <pre v-if="xnatTestResult" style="padding: 10px; background-color: white; margin-top: 10px;">{{xnatTestResult}}</pre>
-                    </p>
-
-                    <b-form-group label="Scan Mapping">
-                        <small>Please enter mapping between XNAT scans names and brainlife datatype/tags</small>
-
-                        <div v-for="(scan, idx) in project.xnat.scans" :key="idx" style="background-color: white; padding: 10px;">
-                            <b-row>
-                                <b-col cols="3">
-                                    <span class="text-muted">Scan Name</span>
-                                    <b-input type="text" v-model="scan.scan" required/>
-                                    <small>XNAT scan name to look for</small>
-                                </b-col>
-                                <b-col cols="5">
-                                    <span class="text-muted">Datatype</span>
-                                    <datatypeselecter v-model="scan.datatype"></datatypeselecter>
-                                    <small>brainlife.io datatype to import as</small>
-
-                                    <datatype :datatype="datatypes[scan.datatype]" style="margin-top: 5px;" v-if="scan.datatype" :clickable="false"/>
-                                </b-col>
-                                <b-col cols="3">
-                                    <div v-if="scan.datatype">
-                                        <div class="text-muted">Datatype Tags</div>
-                                        <tageditor placeholder="Tags" v-model="scan.datatype_tags" :options="datatypes[scan.datatype]._tags" />
-                                        <small>brainlife.io datatype tags to add for this scan</small>
-                                    </div>
-                                </b-col>
-                                <b-col cols="1">
-                                    <div class="text-muted">&nbsp;</div>
-                                    <b-button variant="danger" @click="project.xnat.scans.splice(idx, 1)" size="sm"><icon name="trash"/></b-button>
-                                </b-col>
-                            </b-row>
-                        </div>
-                        <br>
-                        <b-button type="button" variant="secondary" @click="project.xnat.scans.push({})" size="sm"><icon name="plus"/> Add Scan Mapping</b-button>
-
-                    </b-form-group>
-                    <br>
-                </div>
-
                 <h5>Compute Resources</h5>
                 <span class="form-header">Public Resources</span>
                 <b-form-checkbox v-model="project.noPublicResource">
@@ -298,23 +235,7 @@
                     <small>The following resources are allowed to be used for this project.</small>
                     <resource v-for="resource in sharedResources" :key="resource._id" :resource="resource"/>
                 </div>
-
-
-
             </div>
-
-            <!--
-            <b-form-checkbox v-model="project.resources">
-                Only submit jobs on private resources shared for this project<br>
-                <small>Private resources can be shared among members of other projects. By selecting this option, jobs submitted on this project will only run on those resources. Please make sure that Apps you are trying to submit are enabled on specified resources.</small>
-            </b-form-checkbox>
-            <br>
-            <div style="margin-left: 20px">
-                <span class="form-header">Shared Resources</span>
-                <b-alert variant="secondary" :show="!sharedResources || sharedResources.length == 0">There are no resources assigned to this project.</b-alert>
-                <resource v-for="resource in sharedResources" :key="resource._id" :resource="resource"/>
-            </div>
-            -->
 
             <div class="page-footer">
                 <b-container>
@@ -323,7 +244,7 @@
                     <b-button type="submit" variant="primary" :disabled="submitting"><icon v-if="submitting" name="cog" spin/> Submit</b-button>
                 </b-container>
             </div>
-                
+
             <br>
             <br>
             <br>
@@ -357,10 +278,10 @@ const lib = require('@/lib');
 
 export default {
     mixins: [ datatypes ],
-    components: { 
-        contactlist, 
-        pageheader, 
-        license, 
+    components: {
+        contactlist,
+        pageheader,
+        license,
         VueMarkdown,
 
         datatypeselecter,
@@ -376,8 +297,6 @@ export default {
 
     data() {
         return {
-            xnatTestResult: null,
-
             project: null,
             participants: null,
             participants_columns: null,
@@ -400,7 +319,7 @@ export default {
         let participants_def = [
             {subject: "001", age: 12, sex: "F", "handedness": "R"},
             {subject: "002", age: 34, sex: "M", "handedness": "L"},
-        ]; 
+        ];
 
         let participants_columns_def = {
             "gender" : {
@@ -440,11 +359,7 @@ export default {
                     this.project = res.data.projects[0];
 
                     //initialize missing fields (mainly for backward compatibility)
-                    if(!this.project.agreements) Vue.set(this.project, "agreements", []); 
-                    if(!this.project.xnat) Vue.set(this.project, "xnat", {
-                        enabled: false,
-                        scans: [],
-                    });
+                    if(!this.project.agreements) Vue.set(this.project, "agreements", []);
 
                     //load shared resources
                     this.$http.get(Vue.config.amaretti_api+'/resource', {params: {
@@ -469,7 +384,7 @@ export default {
             } else {
                 //new project
                 this.project = {
-                    _id: null, 
+                    _id: null,
                     name: "New Project",
                     desc: "",
                     access: "private",
@@ -481,11 +396,6 @@ export default {
                     agreements: [],
 
                     limitResource: false,
-
-                    xnat: {
-                        enabled: false,
-                        scans: [],
-                    },
                 };
 
                 if (this.$route.query.organization) {
@@ -538,19 +448,6 @@ export default {
             this.showMart = false;
         },
 
-        testXnat() {
-            this.xnatTestResult = null;
-            this.$http.get('xnat/validate', {
-                params: {
-                    hostname: this.project.xnat.hostname,
-                    token: this.project.xnat.token,
-                    secret: this.project.xnat.secret,
-                }
-            }).then(res=>{
-                this.xnatTestResult = res.data;
-            });
-        },
-
         remove_agreement(idx) {
             this.project.agreements.splice(idx, 1);
         },
@@ -573,20 +470,13 @@ export default {
                 participants_columns = JSON.parse(this.participants_columns||"{}");
             } catch(err) {
                 this.$notify({type: 'error', text: "Participants Info has a syntax error: "+err});
-                return; 
-            }        
-
-            //remove trailing / from the hostname if user puts it
-            if(this.project.xnat.hostname) {
-                if(this.project.xnat.hostname[this.project.xnat.hostname.length-1] == "/") {
-                    this.project.xnat.hostname = this.project.xnat.hostname.substring(0, this.project.xnat.hostname.length-1);  //remove the last char.
-                }
+                return;
             }
 
             //make sure participatns info is structured in the correct way
             if(!Array.isArray(participants)) {
                 this.$notify({type: 'error', text: "Participants info should be an array"});
-                return; 
+                return;
             }
             if(participants.some(rec=>!rec.subject)) {
                 this.$notify({type: 'error', text: "subject field is missing in some record for participants info"});

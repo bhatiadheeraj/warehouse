@@ -111,21 +111,6 @@ function subscribe() {
                 next();
             });
         },
-
-        next=>{
-            acon.queue('warehouse.comment', {durable: true, autoDelete: false}, q=>{
-                q.bind('warehouse', 'comment_project.#');
-                q.subscribe({ack: true}, (msg, head, dinfo, ack)=>{
-                    console.log("----------received comment_project");
-                    handleProjectComments(msg, err=>{
-                        if(err) console.error(err);
-                        q.shift();
-                    });
-                });
-                next();
-            });
-        },
-
     ], err=>{
         if(err) throw err;
         console.log("done subscribing");
@@ -460,7 +445,7 @@ function handle_task(task, cb) {
                 if(task.config.forceSecondary) {
                     console.log("processing with secondary archive for app-stage (forceSecondary is set)");
                 } else {
-                    //don't run seconary archive for app-stage
+                    //don't run secondary archive for app-stage
                     return;
                 }
             }
@@ -654,14 +639,6 @@ function debounce(key, action, delay) {
             }, need_delay);
         }
     }
-}
-
-async function handleProjectComments(event, cb) {
-    const project = await db.Projects.findById(event.project);
-    debounce("comment_project."+project.group_id, async ()=>{
-        await common.update_project_stats(project);
-    }, 1000*10);
-    cb();
 }
 
 function handle_instance(instance, cb) {

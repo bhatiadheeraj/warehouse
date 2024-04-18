@@ -296,26 +296,6 @@ exports.archive_task_outputs = async function(user_id, task, outputs, cb) {
                     storage_config,
                 }
 
-                if(project.xnat && project.xnat.enabled) {
-                    dataset_config.storage = "xnat";
-
-                    const secretEnc = exports.encryptConfigValue(project.xnat.secret);
-                    const meta = products[output.id].meta;
-                    dataset_config.storage_config = {
-                        hostname: project.xnat.hostname,
-                        project: project.xnat.project,
-                        token: project.xnat.token,
-                        path: "files", //everything
-                        secretEnc,
-                        meta, //app-archive needs to access subject/session
-                    }
-                    dataset_config.datatype_id = datatype._id;
-                    dataset_config.datatype_name = datatype.name;
-
-                    //app-archive load the prov from the public API and store it next to data
-                    dataset_config.provURL = config.warehouse.api+"/dataset/prov/"+dataset._id;
-                }
-
                 if(output.subdir) {
                     //new subdir outputs
                     dataset_config.dir+="/"+output.subdir;
@@ -758,7 +738,7 @@ exports.cacheContact = function(cb) {
     console.debug("caching contacts", config.warehouse.jwt);
     axios.get(config.auth.api+"/profile/list", {
         params: {
-            limit: 5000, //TODO -- really!?
+            limit: 6000, //TODO -- really!?
         },
         headers: { authorization: "Bearer "+config.warehouse.jwt }, //config.auth.jwt is deprecated
     }).then(res=>{
@@ -1192,7 +1172,6 @@ exports.update_project_stats = async function(project, cb) {
         });
 
         let publications = await db.Publications.countDocuments({project});
-        let comments = await db.Comments.count({project: project._id, removed: false});
 
         let newproject = await db.Projects.findOneAndUpdate({_id: project._id}, {$set: {
             "stats.rules": rules, 
@@ -1201,7 +1180,6 @@ exports.update_project_stats = async function(project, cb) {
             "stats.publications": publications,
             "stats.instances": instance_counts,
             "stats.groupanalysis": groupanalysis,
-            "stats.comments": comments,
         }}, {new: true});
 
         exports.publish("project.update.warehouse."+project._id, {stats: {
@@ -1209,7 +1187,6 @@ exports.update_project_stats = async function(project, cb) {
             instances: instance_counts,
             groupanalysis, //object..
             publications,
-            comments,
         }})
 
         if(cb) cb(null, newproject);
@@ -1467,122 +1444,6 @@ exports.encryptConfigValue = value=>{
     return child_process.execSync("openssl rsautl -inkey "+__dirname+"/config/configEncrypt.key -encrypt", {
         input: value,
     }).toString('base64');
-}
-
-exports.enumXnatObjects = async (project)=>{
-
-    const auth = {
-        username: project.xnat.token,
-        password: project.xnat.secret,
-    }
-
-    //use openssl rsautl to encrypt the xnat secret
-    /*
-    const secretEnc = child_process.execSync("openssl rsautl -inkey "+__dirname+"/config/configEncrypt.key -encrypt", {
-        input: project.xnat.secret,
-    }).toString('base64');
-    */
-    const secretEnc = exports.encryptConfigValue(project.xnat.secret);
-
-    console.log("loading all experiments for this project");
-    const objects = [];
-    const res = await axios.get(project.xnat.hostname+"/data"+
-        "/projects/"+project.xnat.project+
-        "/subjects", {auth});
-    const oSubjects = res.data.ResultSet.Result;
-    for(const oSubject of oSubjects) {
-        console.log("  subject", oSubject.URI);
-        //console.dir(oSubject);
-        /* oSubject
-        {
-          insert_date: '2020-09-15 17:01:51.751',
-          project: 'PIPELINETEST',
-          ID: 'XNAT19_S00012',
-          label: 'S03',
-          insert_user: 'tclo7153',
-          URI: '/data/subjects/XNAT19_S00012'
-        }
-        */
-        const exres = await axios.get(project.xnat.hostname+"/data"+
-            "/projects/"+project.xnat.project+
-            "/subjects/"+oSubject.ID+
-            "/experiments", {auth});
-        for(const oExperiment of exres.data.ResultSet.Result) {
-            console.log("    experiment", oExperiment.ID);
-            //console.log("  <experiment>");
-            /* oExperiment
-              {
-                  date: '',
-                  xsiType: 'xnat:mrSessionData',
-                  'xnat:subjectassessordata/id': 'XNAT19_E00028',
-                  insert_date: '2020-09-15 17:27:26.971',
-                  project: 'PIPELINETEST',
-                  ID: 'XNAT19_E00028',
-                  label: 'S03_MR2',
-                  URI: '/data/experiments/XNAT19_E00028'
-              },
-            */
-            const scanres = await axios.get(project.xnat.hostname+oExperiment.URI+"/scans", {auth});
-            for(const oScan of scanres.data.ResultSet.Result) {
-                console.log("      scan", oScan.ID, oScan.type, oScan.series_description);
-                const mapping = project.xnat.scans.find(scan=>scan.scan == oScan.type);
-                if(mapping) {
-                    objects.push({
-                        meta: {
-                            subject: oSubject.label, 
-                            session: oExperiment.label,
-                            xnat_scan: oScan.ID,
-                        },
-                        datatype: mapping.datatype,
-                        datatype_tags: mapping.datatype_tags,
-
-                        desc: oScan.URI+" "+(oScan.note||oScan.series_description),
-                        tags: [oScan.type], //has to exist for ui
-
-                        storage: "xnat",
-                        storage_config: {
-
-                            hostname: project.xnat.hostname,
-                            project: project.xnat.project,
-                            token: project.xnat.token,
-
-                            //path: "resources/NIFTI/files", //not all project has dicom > nifti conversion turned on.. so we can't use this
-                            path: "resources/DICOM/files",
-
-                            secretEnc,
-                        },
-
-                        create_date: new Date(oExperiment.insert_date),
-                        user_id: project.user_id, //using project creator's id (not always right?)
-                        project: project.id,
-
-                        removed: false,
-                        status: "stored",
-                    });
-                }
-            }
-        }
-    }
-
-    console.log("----------  done enumerating objects");
-    return objects;
-}
-
-exports.updateXNATObjects = async (objects)=>{
-    for(let object of objects) {
-        console.log(JSON.stringify(object, null, 4));
-        //TODO - this wipes out any updates made by user for existing object.. maybe I should upsert a bit more manually?
-        let res = await db.Datasets.findOneAndUpdate({
-            "storage": "xnat",
-
-            //"storage_config.url": object.storage_config.url,
-            "meta.subject": object.meta.subject,
-            "meta.session": object.meta.session,
-            "meta.xnat_scan": object.meta.xnat_scan,
-
-        }, object, {new: true, upsert: true, rawResult: true});
-        console.dir(res.lastErrorObject); 
-    }
 }
 
 exports.datatypeCache = null;

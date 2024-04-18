@@ -10,25 +10,10 @@
                 <p style="opacity: 0.8;font-size: 90%; padding: 10px 0;">
                     We send SMS messages through this email2SMS gateway. 
                     For example, for AT&T, please use address such as <i>1234560000@mms.att.net</i>. 
-                    For other cariers, please refer to the <a href="https://en.wikipedia.org/wiki/SMS_gateway" target="gateway">SMS Gateway for major cariers.</a>
+                    For other carriers, please refer to the <a href="https://en.wikipedia.org/wiki/SMS_gateway" target="gateway">SMS Gateway for major carriers.</a>
                 </p>
             </b-col>
         </b-row>
-
-        <h5>Notification Events</h5>
-        <b-row>
-            <b-col cols="3">
-                <span class="form-header">New Comments</span>
-            </b-col>
-            <b-col cols="7">
-                <b-form-checkbox v-model="profile.private.notifyCommentEmail">
-                    Send email when new comments are posted to project that I am a member, or I follow.
-                </b-form-checkbox>
-            </b-col>
-        </b-row>
-        <br>
-        <br>
-        <br>
         
         <h5>Sounds</h5>
         <b-row>
