@@ -73,8 +73,6 @@ export default {
                 response: true
             });
 
-            console.log(res);
-
             if (res.status != 201) {
                 this.$bvToast.toast('Failed to accept invitation', {
                     title: 'Error',
