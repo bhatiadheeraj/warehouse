@@ -445,10 +445,9 @@ export default {
 
                 this.loadInvites();
 
-            }).catch(res=>{
-                console.error(res);
-                this.$bvToast.toast(`Failed to invite user ${user.username} as ${role}`, {
-                title: 'Error',
+            }).catch(error=>{
+                this.$bvToast.toast(error.response.data.message, {
+                title: 'Failed to invite user',
                 variant: 'danger',
                 solid: true,
                 });

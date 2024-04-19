@@ -69,37 +69,45 @@ export default {
             }
         },
         async acceptInvitation() {
-            const res = await this.$http.post(Vue.config.auth_api + '/organization/'+this.invitation.organization+'/invite/answer', {
-                response: true
-            });
+            try {
+                await this.$http.post(Vue.config.auth_api + '/organization/' + this.invitation.organization + '/invite/answer', {
+                    response: true
+                });
 
-            if (res.status != 201) {
-                this.$bvToast.toast('Failed to accept invitation', {
-                    title: 'Error',
-                    variant: 'danger',
+                this.$bvToast.toast('Invitation accepted successfully', {
+                    title: 'Success',
+                    variant: 'success',
                     autoHideDelay: 5000
                 });
-                return;
+
+                this.$router.push('/organization/' + this.invitation.organization);
+            } catch (error) {
+                this.$bvToast.toast(error.response.data.message, {
+                    title: 'Failed to accept invitation',
+                    variant: 'danger',
+                    solid: true
+                });
             }
-
-            this.$bvToast.toast('Invitation accepted successfully', {
-                title: 'Success',
-                variant: 'success',
-                autoHideDelay: 5000
-            });
-
-            this.$router.push('/organization/'+this.invitation.organization);
         },
-        async rejectInvitation() {
-            const res = await this.$http.post(Vue.config.auth_api + '/organization/'+this.invitation.organization+'/invite/answer', {
-                response: false
-            });
 
-            this.$bvToast.toast('Invitation rejected successfully', {
-                title: 'Success',
-                variant: 'success',
-                autoHideDelay: 5000
-            });
+        async rejectInvitation() {
+            try{
+                await this.$http.post(Vue.config.auth_api + '/organization/'+this.invitation.organization+'/invite/answer', {
+                response: false
+                });
+
+                this.$bvToast.toast('Invitation rejected successfully', {
+                    title: 'Success',
+                    variant: 'success',
+                    autoHideDelay: 5000
+                });
+            } catch (error) {
+                this.$bvToast.toast(error.response.data.message, {
+                    title: 'Failed to reject invitation',
+                    variant: 'danger',
+                    solid: true
+                });
+            }
         },
         computeExpiration(date) {
             return `Expires on ${new Date(date).toDateString()}`;

@@ -1259,12 +1259,6 @@ exports.isadmin = (user, rec)=>{
     return false;
 }
 
-exports.isblAdmin = (user)=>{
-    if(user) {
-        if(user.scopes.warehouse && ~user.scopes.warehouse.indexOf('admin')) return true;
-    }
-    return false;
-}
 
 exports.isguest = (user, rec)=> {
     if(user) {
