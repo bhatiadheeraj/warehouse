@@ -1251,27 +1251,25 @@ exports.publish = (key, message, cb)=>{
     }
 }
 
-exports.isadmin = (user, rec)=>{
-    if(user) {
-        if(user.scopes.warehouse && ~user.scopes.warehouse.indexOf('admin')) return true;
-        if(rec.admins && ~rec.admins.indexOf(user.sub.toString())) return true;
-    }
+exports.isAdmin = (user, rec)=>{
+    if(user.scopes.warehouse?.includes('admin')) return true;
+    if(rec.admins?.includes(user.sub.toString())) return true;
     return false;
 }
 
 
 exports.isguest = (user, rec)=> {
     if(user) {
-        if(user.scopes.warehouse && ~user.scopes.warehouse.indexOf('admin')) return true;
-        if(rec.guests && ~rec.guests.indexOf(user.sub.toString())) return true;
+        if(this.isAdmin(user, rec)) return true;
+        if(rec.guests?.includes(user.sub.toString())) return true;
     }
     return false;
 }
 
-exports.ismember = (user, rec)=>{
+exports.isMember = (user, rec)=>{
     if(user) {
-        if(user.scopes.warehouse && ~user.scopes.warehouse.indexOf('admin')) return true;
-        if(rec.members && ~rec.members.indexOf(user.sub.toString())) return true;
+        if(this.isAdmin(user, rec)) return true;
+        if(rec.members?.includes(user.sub.toString())) return true;
     }
     return false;
 }

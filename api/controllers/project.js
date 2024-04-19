@@ -307,7 +307,7 @@ router.put('/:id', common.jwt(), (req, res, next) => {
     db.Projects.findById(id, async (err, project) => {
         if (err) return next(err);
         if (!project) return res.status(404).end();
-        if (!common.isadmin(req.user, project)) return res.status(401).end("you are not an administartor of this project");
+        if (!common.isAdmin(req.user, project)) return res.status(401).end("you are not an administartor of this project");
 
         //user can't update following fields
         delete req.body.user_id;
@@ -351,7 +351,7 @@ router.delete('/:id', common.jwt(), function (req, res, next) {
     db.Projects.findById(req.params.id, function (err, project) {
         if (err) return next(err);
         if (!project) return next(new Error("can't find the project with id:" + req.params.id));
-        if (common.isadmin(req.user, project)) {
+        if (common.isAdmin(req.user, project)) {
             project.removed = true;
             project.save(function (err) {
                 if (err) return next(err);

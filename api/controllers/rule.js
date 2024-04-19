@@ -339,7 +339,7 @@ router.put('/order/:projectId', common.jwt(), function(req, res, next) {
     db.Projects.findById(projectId, async (err, project)=>{
         if(err) return next(err);
         if(!project) return res.status(404).end();
-        if(!common.isadmin(req.user, project) && !common.ismember(req.user, project)) 
+        if(!common.isAdmin(req.user, project) && !common.isMember(req.user, project))
             return res.status(401).end("you can not update pipeline ordering");
         project.pipelines = req.body; 
         project.save(err=>{
