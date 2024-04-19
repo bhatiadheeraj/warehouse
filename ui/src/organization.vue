@@ -149,8 +149,8 @@
                                 <template #cell(status)="data">
                                   {{ data.item.status }}
                                 </template>
-                                <template #cell(expiry)="data">
-                                  {{ computeExpiry(data.item.invitationExpiration) }}
+                                <template #cell(expiration)="data">
+                                  {{ computeExpiration(data.item.invitationExpiration) }}
                                 </template>
                                 <template #cell(inviterName)="data">
                                   {{ data.item.inviterName }}
@@ -225,7 +225,7 @@ export default {
                 { key: 'email', label: 'Email' },
                 { key: 'role', label: 'Role' },
                 { key: 'status', label: 'Status' },
-                { key: 'expiry', label: 'Expiry' },
+                { key: 'expiration', label: 'Expiration' },
                 { key: 'inviterName', label: 'Inviter' },
                 { key: 'actions', label: 'Actions' },
             ],
@@ -248,7 +248,7 @@ export default {
         edit() {
             this.$router.push('/organization/'+this.organization._id+'/edit');
         },
-        computeExpiry(expiryDate) {
+        computeExpiration(expiryDate) {
             const dateExpiry = new Date(expiryDate);
             if (this.isExpired(dateExpiry)) {
                 return 'Expired';
@@ -321,7 +321,7 @@ export default {
                     email: invite.inviteeDetails.email,
                     role: invite.invitationRole,
                     status: invite.status,
-                    expiry: invite.invitationExpiration,
+                    expiration: invite.invitationExpiration,
                     inviterName: invite.inviterDetails.fullname || invite.inviterDetails.username,
                 }));
             }).catch(res=>{
@@ -436,11 +436,15 @@ export default {
                 invitee: user._id,
                 role: role,
             }).then(res=>{
+
                 this.$bvToast.toast(`Inviting user ${user.username} as ${role}`, {
                 title: 'Invitation sent',
                 variant: 'success',
                 solid: true,
                 });
+
+                this.loadInvites();
+
             }).catch(res=>{
                 console.error(res);
                 this.$bvToast.toast(`Failed to invite user ${user.username} as ${role}`, {
@@ -451,7 +455,6 @@ export default {
             });
 
             this.$bvModal.hide('invite-modal');
-            this.loadInvites();
         },
         isExpired(invitationDate) {
             const expiryDuration = 7;
