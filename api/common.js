@@ -1258,7 +1258,7 @@ exports.isAdmin = (user, rec)=>{
 }
 
 
-exports.isguest = (user, rec)=> {
+exports.isGuest = (user, rec)=> {
     if(user) {
         if(this.isAdmin(user, rec)) return true;
         if(rec.guests?.includes(user.sub.toString())) return true;
