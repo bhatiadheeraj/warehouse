@@ -25,7 +25,7 @@
                 </div>
 
                 <div v-if="!organizations.length && !query">
-                    <p style="opacity: 0.5; margin: 20px; font-size: 120%;">No organization exist</p>
+                    <p style="opacity: 0.5; margin: 20px; font-size: 120%;">No organizations</p>
                 </div>
 
                 <div v-if="query && filtered.length" style="margin: 10px 0px;">
