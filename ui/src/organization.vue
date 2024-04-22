@@ -170,9 +170,10 @@
                       </div>
                 </div>
 
-                <!-- <div v-else-if="tab == 2">
+                <div v-else-if="tab == 2">
+                    <br/>
                     <resource v-for="resource in resources.public" :resources="resources" :key="resource._id" class="resource" :resource="resource"/>
-                </div> -->
+                </div>
             </b-container>
 
         </div>
@@ -240,10 +241,10 @@ export default {
         avatar_url: lib.avatar_url,
         async load() {
             await this.loadOrg()
-            await this.loadProjects()
+            this.loadProjects()
             await this.loadUsers()
-            await this.loadResources()
-            await this.loadInvites()
+            this.loadResources()
+            this.loadInvites()
         },
         edit() {
             this.$router.push('/organization/'+this.organization._id+'/edit');
