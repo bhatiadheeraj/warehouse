@@ -36,6 +36,7 @@ import missing from '@/missing'
 import organizations from '@/organizations'
 import organizationedit from '@/organizationedit'
 import organization from '@/organization'
+import organizationresourceedit from '@/organizationresourceedit'
 
 Vue.use(Router)
 
@@ -89,6 +90,7 @@ export default new Router({
         { path: '/organization', component: organizations, meta: { public: true, sidemenu: 'organization' } },
         { path: '/organization/:id', component: organization, meta: { public: true, sidemenu: 'organization' } },
         { path: '/organization/:id/edit', component: organizationedit, meta: { sidemenu: 'organization' } },
+        { path: '/organization/:organizationId/resource/:resourceId/edit', component: organizationresourceedit, meta: { sidemenu: 'organization' } },
         // { path: '/organization/:id/:tab?', component: organization, meta: { public: true, sidemenu: 'organization' } },
 
 

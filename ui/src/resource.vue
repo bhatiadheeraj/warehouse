@@ -41,6 +41,7 @@
                         <b-tab v-if="projects">
                             <template v-slot:title>Projects</template>
                         </b-tab>
+
                     </b-tabs>
                 </b-container>
             </div>
@@ -121,6 +122,18 @@
                             </p>
                             <br>
                         </b-col>
+                    </b-row>
+
+                    <b-row v-if="resource.organization && resource.organizationName">
+                        <b-col cols="2">
+                            <span class="form-header">Organization</span>
+                        </b-col>
+
+                        <b-col>
+                            <h5>
+                                <b-badge variant="info">{{resource.organizationName}}</b-badge>
+                            </h5>
+                        </b-col>    
                     </b-row>
 
                     <b-row v-if="resource.gids && resource.gids.length > 0">
@@ -398,6 +411,7 @@ export default {
                 }),
             }}).then(res=>{
                 this.resource = res.data.resources[0];
+                if(this.resource.organization) this.loadOrganization();
                 if(!this.resource) alert("no such resource");
 
                 /* resource.stats might not be set.. why do I have to sort it?
@@ -534,8 +548,12 @@ export default {
 
         edit() {
             //this.editing = true;
-            this.$router.push('/resource/'+this.resource._id+'/edit');
+            if(this.resource.organization) this.$router.push('/organization/'+this.resource.organization+'/resource/'+this.resource._id+'/edit');
+            else this.$router.push('/resource/'+this.resource._id+'/edit');
         },
+        async loadOrganization() {
+            this.resource.organizationName = await this.$http.get(Vue.config.auth_api+'/organization/'+this.resource.organization).then(res=>res.data.name);
+        }
     },
 
     watch: {

@@ -415,7 +415,7 @@ export default {
             return [];
         }
 
-        let org = this.organizations.find(org => org._id === this.project.organization);
+        const org = this.organizations.find(org => org._id === this.project.organization);
 
         if (org && org.roles) {
             return org.roles.flatMap(role => role.members);

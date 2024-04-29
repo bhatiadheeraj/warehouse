@@ -81,6 +81,35 @@
                 </div>
                 <br clear="both">
             </div>
+
+            <template v-if="projectsWithOrganization.length && organizations.length" style="position: relative;">
+                <div v-for="organization in organizations" :key="organization._id" style="position: relative">
+                    <h4 class="group-title">
+                        {{ organization.name }} Projects
+                    </h4>
+                    <div v-if="projectsWithOrganization.filter(project => project.organization == organization._id).length">
+                        <!-- Tile mode display -->
+                        <div style="padding: 10px" v-if="mode == 'tile'">
+                            <div v-for="project in projectsWithOrganization.filter(project => project.organization == organization._id)" :key="project._id">
+                                <projectcard :project="project" />
+                            </div>
+                        </div>
+                        <!-- List mode display -->
+                        <div style="padding: 10px" v-if="mode == 'list'">
+                            <div v-for="project in projectsWithOrganization.filter(project => project.organization == organization._id)" :key="project._id">
+                                <projectbar :project="project"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div v-else>
+                        <div style="padding: 10px; color: grey;">
+                            <em>No projects in this organization.</em>
+                        </div>
+                    </div>
+                    <br clear="both">
+                </div>
+            </template>
+
         </div><!--v-if="!loading"-->
     </div>
     <b-button class="button-fixed" @click="newproject">
@@ -108,9 +137,9 @@ export default {
             my_projects: [],
             other_projects: [],
             recentProjects: [],
-
+            organizations: [],
+            projectsWithOrganization: [],
             loading: false,
-
             query: "",
             datatypeName : {},
             mode: localStorage.getItem("projects.mode")||"tile",
@@ -121,6 +150,7 @@ export default {
     mounted() {
         this.query = sessionStorage.getItem("projects.query")||"";
         this.load();
+        this.loadOrganizations();
 
     },
 
@@ -128,6 +158,7 @@ export default {
         mode() {
             localStorage.setItem("projects.mode", this.mode);
             this.projects.forEach(p=>{p._visible = false});
+            this.projectsWithOrganization.forEach(p=>{p._visible = false});
             this.$nextTick(()=>{
                 this.handleScroll();
             });
@@ -166,8 +197,8 @@ export default {
                 select: 'name desc avatar group_id stats.datasets stats.instances create_date admins members guests access organization',
             }}).then(res=>{
                 this.projects = res.data;
+                this.projectsWithOrganization = this.projects.filter(p=>p.organization);
                 this.projects = this.projects.filter(p => !p.organization);
-
                 let lastMonth = new Date();
                 lastMonth.setDate(lastMonth.getDate() - 30);
 
@@ -225,6 +256,18 @@ export default {
                 alert('Please signup/login first to create a new project');
             }
         },
+        loadOrganizations() {
+            this.$http.get(Vue.config.auth_api+'/organization', {params: {
+                find: JSON.stringify({ 
+                    removed: false 
+                }),
+            }})
+            .then(res=>{
+                this.organizations = res.data;
+            }, err=>{
+                console.error(err);
+            }); 
+        }
     },
 }
 </script>

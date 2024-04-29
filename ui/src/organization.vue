@@ -30,12 +30,12 @@
 
                 <div>
                     <b-tabs class="brainlife-tab sub-tab" v-model="tab">
-                        <b-tab title="Projects" active></b-tab>
-                        <b-tab title="Members" :disabled="!isAdmin()"/>
+                        <b-tab title="Members" active/>
                         <b-tab title="Resources" :disabled="!isAdmin()"/>
+                        <b-tab title="Projects"></b-tab>
                     </b-tabs>
                 </div>
-                <div v-if="tab == 0">
+                <div v-if="tab == 2">
                     <br/>
                         <b-form inline style="gap: 10px">
                             <b-form-input v-model="query" type="text" placeholder="Search Projects" @input="change_query_debounce" class="input search">
@@ -67,7 +67,7 @@
                         </div>
                     </div>
                 </div>
-                <div v-else-if="tab == 1">
+                <div v-else-if="tab == 0">
 
                     <br/>
 
@@ -83,7 +83,7 @@
                                 <template #header>
                                   <div class="w-100 d-flex justify-content-between align-items-center">
                                     <span>{{ users.length }} members</span>
-                                    <div class="d-flex justify-content-end">
+                                    <div class="d-flex justify-content-end" v-if="isAdmin()">
                                         <invite-user id="invite-modal" @submit-invite="inviteUser"></invite-user>
                                     </div>
                                   </div>
@@ -170,9 +170,18 @@
                       </div>
                 </div>
 
-                <div v-else-if="tab == 2">
+                <div v-else-if="tab == 1">
                     <br/>
-                    <resource v-for="resource in resources.public" :resources="resources" :key="resource._id" class="resource" :resource="resource"/>
+                    <div style="gap: 10px; margin: 10px; width: 100%">
+                       <h4>Resources <b-button variant="primary"
+                        size="sm"
+                        v-if="isAdmin()"
+                        @click="newResource"
+                        >New</b-button></h4>
+                    </div>
+                    <hr style="border-top: 1px solid #0001;"/>
+                    <br/>
+                    <resource v-for="resource in resources" :resources="resources" :key="resource._id" class="resource" :resource="resource"/>
                 </div>
             </b-container>
 
@@ -210,15 +219,12 @@ export default {
             tab: 0,
             projects: [],
             query: "",
-            queryDebounce: null,
+            queryResource: "",
             users: [],
             searchMemberquery: null,
             filteredMembers: [],
-            resources: {
-                mine: [],
-                shared: [], //only admin should see this
-                public: [],
-            },
+            resources: [],
+            filteredResources: [],
             invites: [],
             inviteFields: [
                 { key: 'name', label: 'Name' },
@@ -332,6 +338,12 @@ export default {
         change_query_debounce() {
            this.change_query();
         },
+        changeQueryResource() {
+            console.log(this.queryResource, this.resources);
+            if(this.queryResource) this.filteredResources = this.resources.filter(resource=> resource.name.toLowerCase().includes(this.queryResource.toLowerCase()));
+            else this.filteredResources = this.resources;
+        },
+
         searchMember() {
             if(this.searchMemberquery) {
                 this.filteredMembers = this.users.filter(user=>{
@@ -340,10 +352,6 @@ export default {
             } else {
                 this.filteredMembers = this.users;
             }
-        },
-        clearQuery() {
-            this.query = "";
-            this.filtered = this.projects;
         },
 
         change_query() {
@@ -411,22 +419,10 @@ export default {
 
         loadResources() {
             this.$http.get(Vue.config.amaretti_api+'/resource', {params: {
-            find: JSON.stringify(find),
+            find: JSON.stringify({ organization: this.organization._id }),
             select: 'resource_id config.desc config.maxtask name citation status status_msg lastok_date active gids stats avatar'
              }}).then(res=>{
-                this.resources.mine = [];
-                this.resources.shared = [];
-                this.resources.public = [];
-                const usub = Vue.config.user.sub.toString();
-                res.data.resources.forEach(r=>{
-                    if(r.gids.includes(1)) {
-                        this.resources.public.push(r);
-                    } else if(r.user_id == usub || (r.admins && r.admins.includes(usub))) {
-                        this.resources.mine.push(r);
-                    } else {
-                        this.resources.shared.push(r);
-                    }
-                });
+                this.resources = res.data.resources;
             }).catch(console.error);
         },
         newProject() {
@@ -489,7 +485,10 @@ export default {
             }).catch(err=>{
                 console.error(err);
             });
-        }
+        },
+        newResource() {
+            this.$router.push('/organization/'+this.organization._id+'/resource/_/edit');
+        },
     },
     watch: {
         tab: function() {

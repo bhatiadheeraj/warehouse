@@ -73,8 +73,8 @@ export default {
         }})
         .then(res=>{
             this.organizations = res.data;
-        }, res=>{
-            console.error(res);
+        }, err=>{
+            console.error(err);
         });
         this.loadInvites();
     },
