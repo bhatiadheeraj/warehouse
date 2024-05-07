@@ -59,7 +59,8 @@
             <h4>Resources</h4>
         </li>
 
-        <li @click="go('/organization')" :class="{active: active == 'organization'}">
+        <li v-if="config.user"
+            @click="go('/organization')" :class="{active: active == 'organization'}">
             <icon name="building" scale="1.2"/>
             <h4>Organizations</h4>
         </li>

@@ -28,7 +28,7 @@
                     </b-col>
                 </b-row>
 
-                <div>
+                <div style="margin-bottom: 1rem">
                     <b-tabs class="brainlife-tab sub-tab" v-model="tab">
                         <b-tab title="Members" active/>
                         <b-tab title="Resources" :disabled="!isAdmin()"/>
@@ -40,10 +40,6 @@
                         <b-form inline style="gap: 10px">
                             <b-form-input v-model="query" type="text" placeholder="Search Projects" @input="change_query_debounce" class="input search">
                             </b-form-input>
-
-                            <b-button variant="primary"
-                            @click="newProject"
-                            >New Project</b-button>
                         </b-form>
 
                     <div v-if="!projects.length && query">
@@ -185,6 +181,9 @@
                 </div>
             </b-container>
 
+            <b-button v-if="tab == 2" class="button-fixed" @click="newproject">
+                New Project
+            </b-button>
         </div>
     </div>
 </template>

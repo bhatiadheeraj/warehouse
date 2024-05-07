@@ -20,7 +20,6 @@
                 <b-container>
                     <b-row>
                         <b-col cols="12">
-                            {{ resource.gids }}
                             <b-form-checkbox v-model="resource.active">Active</b-form-checkbox>
                             <p>
                                 <small>Uncheck this to temporarily disable this resource.</small>
