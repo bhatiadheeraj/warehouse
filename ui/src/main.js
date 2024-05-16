@@ -97,6 +97,8 @@ Vue.filter('capitalize', v => v.toUpperCase())
 Vue.filter('formatNumber', v => numeral(v).format('0,0'))
 
 const host = process.env.HOSTNAME || window.location.hostname
+// const host = "www.localhost:8080" //for testing with orcid login, we need to use localhost, but for github and google we need not to use www
+console.log("Host", host)
 const httpProtocol = location.protocol
 const wsProtocol = httpProtocol === 'https:' ? 'wss:' : 'ws:'
 const apiHost = `${httpProtocol}//${host}`
@@ -140,7 +142,7 @@ Vue.config.isSu = function () {
 
 axios.defaults.baseURL = Vue.config.api
 
-function setUpJWT (jwt) {
+function setUpJWT(jwt) {
     Vue.config.user = JWTDecode(jwt)
     Vue.config.jwt = jwt
 
@@ -189,7 +191,7 @@ export const app = new Vue({
     el: '#app',
     router,
     template: `<warehouse v-if="ready"/>`,
-    data () {
+    data() {
         return {
             ready: false,
 
@@ -205,7 +207,7 @@ export const app = new Vue({
     },
     components: { warehouse },
 
-    async mounted () {
+    async mounted() {
         let wide = localStorage.getItem('sidemenuWide')
         if (wide) this.sidemenuWide = (wide === '1')
 
@@ -242,26 +244,28 @@ export const app = new Vue({
     },
 
     methods: {
-        toggleSideMenu () {
+        toggleSideMenu() {
             this.sidemenuWide = !this.sidemenuWide
             localStorage.setItem('sidemenuWide', this.sidemenuWide ? '1' : '0')
         },
 
-        toggleRightView (page) {
+        toggleRightView(page) {
             this.rightviewOpen = page
             localStorage.setItem('rightviewOpen', JSON.stringify(page))
         },
 
-        async ensure_myproject () {
+        async ensure_myproject() {
             if (!Vue.config.jwt) return
 
             // TODO create project in API
 
             // make sure user has create at least 1 project
-            const res = await this.$http.get('project', {params: {
-                find: { user_id: Vue.config.user.sub },
-                limit: 1, // I just need count (0 means all)
-            }})
+            const res = await this.$http.get('project', {
+                params: {
+                    find: { user_id: Vue.config.user.sub },
+                    limit: 1, // I just need count (0 means all)
+                }
+            })
             if (res.data.projects.length) return
 
             await this.$http.post('project', {
@@ -278,7 +282,7 @@ export const app = new Vue({
             location.reload()
         },
 
-        async refresh_jwt (cb) {
+        async refresh_jwt(cb) {
             if (!Vue.config.jwt) return
 
             if (Vue.config.isSu()) {
@@ -307,7 +311,7 @@ export const app = new Vue({
             }
         },
 
-        async load_profile () {
+        async load_profile() {
             if (!Vue.config.jwt) return
             try {
                 const res = await this.$http.get(`${Vue.config.auth_api}/profile`)
@@ -316,7 +320,7 @@ export const app = new Vue({
             }
         },
 
-        playNotification (name, theme) {
+        playNotification(name, theme) {
             if (!theme && Vue.config.profile.private.notification) {
                 theme = Vue.config.profile.private.notification.process_sound
             }

@@ -113,7 +113,7 @@ router.put('/:id', common.jwt(), (req, res, next)=>{
     db.Datatypes.findById(id, (err, datatype)=>{
         if(err) return next(err);
         if(!datatype) return res.status(404).end();
-        if(!common.isadmin(req.user, datatype)) return res.status(401).end("you are not an administartor of this datatype");
+        if(!common.isAdmin(req.user, datatype)) return res.status(401).end("you are not an administartor of this datatype");
         
         //user can't update following fields
         //delete req.body.user_id;

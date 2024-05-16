@@ -1171,10 +1171,8 @@ exports.update_project_stats = async function(project, cb) {
             });
         });
 
-        //lad number of publications
         let publications = await db.Publications.countDocuments({project});
 
-        //now update the record!
         let newproject = await db.Projects.findOneAndUpdate({_id: project._id}, {$set: {
             "stats.rules": rules, 
             "stats.resources": resource_stats, 
@@ -1184,7 +1182,6 @@ exports.update_project_stats = async function(project, cb) {
             "stats.groupanalysis": groupanalysis,
         }}, {new: true});
 
-        //only publish some stats that UI wants to receive
         exports.publish("project.update.warehouse."+project._id, {stats: {
             rules, //counts..
             instances: instance_counts,
@@ -1254,26 +1251,25 @@ exports.publish = (key, message, cb)=>{
     }
 }
 
-exports.isadmin = (user, rec)=>{
+exports.isAdmin = (user, rec)=>{
+    if(user.scopes.warehouse?.includes('admin')) return true;
+    if(rec.admins?.includes(user.sub.toString())) return true;
+    return false;
+}
+
+
+exports.isGuest = (user, rec)=> {
     if(user) {
-        if(user.scopes.warehouse && ~user.scopes.warehouse.indexOf('admin')) return true;
-        if(rec.admins && ~rec.admins.indexOf(user.sub.toString())) return true;
+        if(this.isAdmin(user, rec)) return true;
+        if(rec.guests?.includes(user.sub.toString())) return true;
     }
     return false;
 }
 
-exports.isguest = (user, rec)=> {
+exports.isMember = (user, rec)=>{
     if(user) {
-        if(user.scopes.warehouse && ~user.scopes.warehouse.indexOf('admin')) return true;
-        if(rec.guests && ~rec.guests.indexOf(user.sub.toString())) return true;
-    }
-    return false;
-}
-
-exports.ismember = (user, rec)=>{
-    if(user) {
-        if(user.scopes.warehouse && ~user.scopes.warehouse.indexOf('admin')) return true;
-        if(rec.members && ~rec.members.indexOf(user.sub.toString())) return true;
+        if(this.isAdmin(user, rec)) return true;
+        if(rec.members?.includes(user.sub.toString())) return true;
     }
     return false;
 }
@@ -1297,6 +1293,34 @@ exports.users_general = async ()=>{
         console.error(err);
     }
 }
+
+exports.getOrganization = async (id) => {
+    try {
+        const response = await axios.get(config.auth.api + "/organization/" + id, {
+            headers: { authorization: "Bearer "+config.warehouse.jwt }, //config.auth.jwt is deprecated
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Failed to load organization", error);
+        throw error;
+    }
+};
+
+
+exports.isOrgAdmin = (user, org) => {
+    const adminRole = org.roles.find(role => role.role === 'admin');
+
+    if (adminRole && adminRole.members.includes(user.id)) return true;
+    if (org.owner.toString() === user.id) return true;
+    return false;
+};
+
+
+exports.isOrgMember = (user, org) => {
+    const memberRole = org.roles.find(role => role.role === 'member');
+    if (memberRole && memberRole.members.includes(user.id)) return true;
+    return false;
+};
 
 
 exports.cast_mongoid = function(node) {
