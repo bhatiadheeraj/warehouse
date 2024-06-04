@@ -6,16 +6,17 @@ The brainlife.io warehouse provides most of the user interface functionality and
 
 For more information, please read [Brainlife Doc](https://brainlife.io/docs/)
 
-For Warehouse API doc, please read [Warehouse API Doc](https://brainlife.github.io/warehouse/apidoc/)
+For the Warehouse API doc, please read [Warehouse API Doc](https://brainlife.github.io/warehouse/apidoc/)
 
-### Author
-- Soichi Hayashi (hayashis@iu.edu)
+### Author(s)
+- [Soichi Hayashi](soichih@gmail.com)
+- [Anibal S. Heinsfeld](anibalsolon@gmail.com)
 
-### Contributors
+### Director 
 - [Franco Pestilli](frakkopesto@gmail.com)
 
 ### Funding Acknowledgement
-brainlife.io is publicly funded and for the sustainability of the project it is helpful to Acknowledge the use of the platform. We kindly ask that you acknowledge the funding below in your publications and code reusing this code.
+brainlife.io is publicly funded and for the sustainability of the project, it is helpful to Acknowledge the use of the platform. We ask to acknowledge the funding below in your publications and reuse this code.
 
 [![NSF-BCS-1734853](https://img.shields.io/badge/NSF_BCS-1734853-blue.svg)](https://nsf.gov/awardsearch/showAward?AWD_ID=1734853)
 [![NSF-BCS-1636893](https://img.shields.io/badge/NSF_BCS-1636893-blue.svg)](https://nsf.gov/awardsearch/showAward?AWD_ID=1636893)
