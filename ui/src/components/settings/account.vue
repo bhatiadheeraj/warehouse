@@ -74,7 +74,7 @@
         </div>
 
         <!--fake card to add new openid connect account-->
-        <div class="account">
+        <!-- <div class="account">
             <b-form-checkbox switch :checked="false" size="lg" style="float: right" @change="account('oidc', true)"/>
             <img src="@/assets/images/cilogon.png" width="20" height="20" style="float: left"> 
             <div class="account-detail">
@@ -84,7 +84,7 @@
             </div>
             <div class="account-time">
             </div>
-        </div>
+        </div> -->
         <br clear="both">
         <!--
         Please visit the legacy <a href="/auth/#!/settings/account" target="_blank">Account Settings</a> page for more account settings.
@@ -96,6 +96,7 @@
 <script>
 
 import Vue from 'vue'
+import router from '@/router'
 
 export default {
     components: { 
@@ -108,7 +109,7 @@ export default {
                 { type: "google", ext: "googleid", icon: "brands/google", name: "Google", time: "google_login", },
                 { type: "github", ext: "github", icon: "brands/github", name: "Github", time: "github_login", },
                 { type: "orcid", ext: "orcid", icon: "brands/orcid", name: "ORCID", time: "orcid_login", },
-                { type: "globus", ext: "globus", icon: "cloud", name: "Globus", time: "globus_login", },
+                // { type: "globus", ext: "globus", icon: "cloud", name: "Globus", time: "globus_login", },
             ],
 
             form: {
@@ -128,6 +129,15 @@ export default {
                 },
                 times: {}
             },
+        }
+    },
+    created() {
+        const errorMessage = this.$route.query.errorMessage;
+        const successMessage = this.$route.query.successMessage;
+        if(errorMessage) {
+            this.$notify({type: "error", text: errorMessage});
+        } else if(successMessage) {
+            this.$notify({type: "success", text: successMessage});
         }
     },
 

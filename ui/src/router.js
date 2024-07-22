@@ -33,6 +33,10 @@ import openneuro from '@/openneuro'
 import settings from '@/settings'
 import test from '@/test'
 import missing from '@/missing'
+import organizations from '@/organizations'
+import organizationedit from '@/organizationedit'
+import organization from '@/organization'
+import organizationresourceedit from '@/organizationresourceedit'
 
 Vue.use(Router)
 
@@ -83,6 +87,14 @@ export default new Router({
         { path: '/pubs', component: pubs, meta: { public: true, sidemenu: 'pub' } },
         { path: '/pub/:id', component: pub, meta: { public: true, sidemenu: 'pub' } },
 
-        { path: '/slack', beforeEnter: () => { window.location.href = 'https://join.slack.com/t/brainlife/shared_invite/zt-1now1p07p-rf6vvvcp6Aiu8XhO1om8aA' }},
+        { path: '/organization', component: organizations, meta: { public: true, sidemenu: 'organization' } },
+        { path: '/organization/:id', component: organization, meta: { public: true, sidemenu: 'organization' } },
+        { path: '/organization/:id/edit', component: organizationedit, meta: { sidemenu: 'organization' } },
+        { path: '/organization/:organizationId/resource/:resourceId/edit', component: organizationresourceedit, meta: { sidemenu: 'organization' } },
+        // { path: '/organization/:id/:tab?', component: organization, meta: { public: true, sidemenu: 'organization' } },
+
+
+        { path: '/slack', beforeEnter: () => { window.location.href = 'https://join.slack.com/t/brainlife/shared_invite/zt-1now1p07p-rf6vvvcp6Aiu8XhO1om8aA' } },
+
     ]
 })

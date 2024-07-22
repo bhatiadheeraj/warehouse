@@ -58,10 +58,6 @@ exports.traverseProvenance = async (startTaskId) => {
             }
         };
         switch(dataset.storage){
-        case "xnat":
-            //XNAT dataset contains auth object with user/pass. watch out!
-            node.storageLocation = dataset.storage_config.url;
-            break;
         case "datalad":
             //storage_config.files[].src contain full path.. but maybe too verbose
             node.storageLocation = dataset.storage_config.path;
