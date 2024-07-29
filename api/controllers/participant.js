@@ -54,8 +54,8 @@ router.get('/:projectid', common.jwt({credentialsRequired: false}), (req, res, n
         if(!project) return res.status(404).end();
 
         if( !project.publishParticipantsInfo && 
-            !common.isadmin(req.user, project) && 
-            !common.ismember(req.user, project)) {
+            !common.isAdmin(req.user, project) &&
+            !common.isMember(req.user, project)) {
             return res.status(401).end("you are not an administartor nor member of this project (no public participants)");
         }
             
@@ -114,7 +114,7 @@ router.put('/:projectid', common.jwt(), (req, res, next)=>{
     db.Projects.findById(req.params.projectid, (err, project)=>{
         if(err) return next(err);
         if(!project) return res.status(404).end();
-        if(!common.isadmin(req.user, project) && !common.ismember(req.user, project)) 
+        if(!common.isAdmin(req.user, project) && !common.isMember(req.user, project))
             return res.status(401).end("you are not an administartor nor member of this project");
 
         let set = { 

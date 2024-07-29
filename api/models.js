@@ -33,6 +33,8 @@ var projectSchema = mongoose.Schema({
 
     group_id: {type: Number, unique: true} , //group id from auth service to host admins/members
 
+    organization: String, //organization that this project belongs to (if set, project is listed under this organization)
+
     name: String,
     desc: String, 
 
@@ -44,6 +46,8 @@ var projectSchema = mongoose.Schema({
     //access control 
     //* private - only the project member can access
     //* public - accessible by anyone
+    //* public_for_org - accessible by anyone in the organization
+
     access: {type: String, default: "private" },
 
     //for a private project, list it for everyone to see the summary
@@ -128,9 +132,6 @@ var projectSchema = mongoose.Schema({
                 config: mongoose.Schema.Types.Mixed,
             }]
         },
-
-        //number of comments on this project
-        comments: Number,
     },
 
     //quota: {type: Number, default: 1000000000000}, //maximum archive size (1TB by default)
@@ -165,40 +166,6 @@ var projectSchema = mongoose.Schema({
     //project can store datasets on project specific storage. {resource_id}
     //storage: String,  //default to warehouse config.archive.storage_default
     //storage_config: mongoose.Schema.Types.Mixed, 
-    
-    //experimental
-    xnat: {
-        enabled: { type: Boolean, default: false },
-
-        hostname: String,
-        token: String,
-        secret: String, //TODO - we need to encrypt this
-        tokenUpdated: Date, //when the token was updated
-
-        project: String, //XNAT project to map to
-
-        //scan / datatype mapping
-        scans: [
-            {
-                scan: String,  //"type" field in scan object
-                /*
-                 * "scan" object from xnat
-                  {
-                    xsiType: 'xnat:mrScanData',
-                    xnat_imagescandata_id: '768',
-                    note: '',
-                    series_description: '',
-                    ID: '4',
-                    type: 'EP2D_3iso_p2_S37',
-                    URI: '/data/experiments/XNAT19_E00030/scans/4',
-                    quality: ''
-                  },
-                */
-                datatype: {type: mongoose.Schema.Types.ObjectId, ref: 'Datatypes'},
-                datatype_tags: [String],
-            }
-        ],
-    },
 
     //describes how all pipeline rules are organized
     pipelines: mongoose.Schema.Types.Mixed, //TODO dangerous..
@@ -915,4 +882,3 @@ const ezGovProjectSchema = mongoose.Schema({
 });
 
 exports.ezGovProjects = mongoose.model('ezGovProjects', ezGovProjectSchema);
-

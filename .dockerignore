@@ -2,5 +2,6 @@
 config
 ui/config.js
 docker/config
-**/node_modules
+node_modules
 .git
+ui

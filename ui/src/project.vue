@@ -64,8 +64,6 @@
                             </b-tooltip>
                         </span>
 
-
-
                     </template>
                 </b-tab>
             </b-tabs>
@@ -207,54 +205,6 @@
                             </b-col>
                         </b-row>
 
-                        <div v-if="project.xnat.enabled" style="background-color: #eee; padding: 10px; border-radius: 10px">
-                            <span class="form-header">XNAT Integration</span>
-                            <p>
-                                <small>Data Archive on this project is mapped to the XNAT instance</small>
-                            </p>
-                            <b-row>
-                                <b-col sm="3"><span class="form-sub-header">XNAT Hostname</span></b-col>
-                                <b-col><pre>{{project.xnat.hostname}}</pre></b-col>
-                            </b-row>
-                            <br>
-                            <b-row>
-                                <b-col sm="3"><span class="form-sub-header">XNAT Project</span></b-col>
-                                <b-col><b>{{project.xnat.project}}</b></b-col>
-                            </b-row>
-                            <br>
-                            <b-row>
-                                <b-col sm="3"><span class="form-sub-header">SCAN Mapping</span></b-col>
-                                <b-col>
-                                    <b-row>
-                                        <b-col>
-                                            <small>XNAT Scan</small>
-                                        </b-col>
-                                        <b-col sm="1"> </b-col>
-                                        <b-col>
-                                            <small>Brainlife Datatype</small>
-                                        </b-col>
-                                    </b-row>
-                                    <hr style="margin: 5px;">
-                                    <b-row v-for="(map, idx) in project.xnat.scans" :key="idx">
-                                        <b-col>
-                                            <b>{{map.scan}}</b>
-                                        </b-col>
-                                        <b-col sm="1"> ➜ </b-col>
-                                        <b-col>
-                                            <datatypetag :datatype="map.datatype" :tags="map.datatype_tags"/>
-                                        </b-col>
-                                    </b-row>
-
-                                    <br>
-                                    <p>
-                                        <small>brainlife.io will perodically crawl XNAT and update object listed in archive. If you'd like to load the objects now, please click this button.</small><br>
-                                        <b-button size="sm" @click="loadXNATObjects">Load Objects</b-button>
-                                    </p>
-                                </b-col>
-                            </b-row>
-                        </div>
-                        <br>
-
                         <b-tabs class="brainlife-tab sub-tab" v-model="detailTab">
                             <b-tab title="README" active/>
                             <b-tab>
@@ -277,13 +227,6 @@
                                 <template v-slot:title>
                                     Related Articles
                                     <small v-if="project.relatedPapers">{{project.relatedPapers.length}}</small>
-                                </template>
-                            </b-tab>
-
-                            <b-tab>
-                                <template v-slot:title>
-                                    Comments
-                                    <small v-if="project.stats.comments">{{project.stats.comments}}</small>
                                 </template>
                             </b-tab>
                         </b-tabs>
@@ -373,39 +316,6 @@
                                 <mag v-for="paper in project.relatedPapers" :key="paper._id" :paper="paper"/>
                             </div>
                         </div>
-
-                        <div v-if="detailTab == 4">
-                            <b-alert show variant="secondary" v-if="!config.user"> Please login to Comments.</b-alert>
-                            <div v-else-if="comments && comments.length">
-                                <div v-for="comment in comments" :key="comment._id" class="commentbox">
-                                    <div class="comment-header">
-                                        <contact :id="comment.user_id" size="small"/>
-                                        <small><timeago :datetime="comment.update_date"/></small>
-                                        <div style="float: right" v-if="isauthor(comment.user_id) || isadmin(comment.user_id)">
-                                            <div @click="editComment(comment)" class="button" title="Edit Comment">
-                                                <icon name="edit"/>
-                                            </div>
-                                            <div @click="deleteComment(comment)" class="button" title="Delete Comment">
-                                                <icon name="trash"/>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <p v-if="comment.removed" class="comcoontent comment-removed">Comment removed</p>
-                                    <p v-else class="comcontent" v-html="comment.comment"/>
-                                </div>
-                            </div>
-                            <div style="position: relative">
-                                <span @click="toggleEmojiMart()" style="position:absolute;top: 10px; right: 10px; cursor: pointer;">😋</span>
-                                <b-form-textarea v-model="comment" placeholder="New Comment" required/>
-                                <emojimart v-if="showMart" @select="addEmojiToComment" style="position: absolute; z-index: 1; right: 0; height:250px"/>
-                            </div>
-                            <br>
-                            <b-button v-if="comment.length" @click="submitComment()">Post</b-button>
-                            <div v-if="!comments.length && !comment.length" style="height:120px">
-                                <p>Be the first one to comment !</p>
-                            </div>
-                            <br>
-                        </div>
                     </div><!-- main content-->
                 </div><!--project header-->
                 <div v-if="config.debug">
@@ -488,8 +398,6 @@ import newtaskModal from '@/modals/newtask'
 import datatypeselecterModal from '@/modals/datatypeselecter'
 import ReconnectingWebSocket from 'reconnectingwebsocket'
 import citation from '@/components/citation'
-import {VueEditor} from "vue2-editor"
-import { Picker } from 'emoji-mart-vue'
 
 import * as Papa from 'papaparse';
 import agreementMixin from '@/mixins/agreement'
@@ -531,7 +439,6 @@ export default {
         datatypeselecterModal,
         stateprogress,
         citation,
-        emojimart: Picker,
     },
 
     data() {
@@ -541,7 +448,6 @@ export default {
 
             resource_usage: null,
             total_walltime: 0,
-            editcommentID : null,
             showMart: false,
 
             participants: null,
@@ -570,8 +476,6 @@ export default {
             showAgreements: false,
 
             config: Vue.config,
-            comment: "",
-            comments: [],
             customToolbar:  [
                 ["bold", "italic", "underline"],
                 [{ list: "ordered" }, { list: "bullet" }],
@@ -601,15 +505,6 @@ export default {
             }
         },
         detailTab: function() {
-            if(this.detailTab == 4) {
-                this.axios.get("/comment/project/"+this.project._id).then(res=>{
-                    var url = Vue.config.event_ws+"/subscribe?jwt="+Vue.config.jwt;
-                    this.comments = res.data;
-                }).catch(err=>{
-                    console.error(err);
-                    this.$notify({text: err.response.data.message, type: 'error' });
-                })
-            }
         }
     },
 
@@ -649,29 +544,6 @@ export default {
             tempLink.href = csvURL;
             tempLink.setAttribute('download', 'download.csv');
             tempLink.click();
-        },
-        addEmojiToComment(emoji) {
-            this.comment += emoji.native;
-            this.showMart = false;
-        },
-        toggleEmojiMart() {
-            if(this.showMart) this.showMart = false;
-            else this.showMart = true;
-        },
-        deleteComment(comment) {
-            if(confirm("do you want to remove this comment?")) {
-                this.$http.delete('comment/'+comment._id).then(res=>{
-                    this.$notify({text: "removed"});
-                }).catch(err=>{
-                    console.error(err);
-                    this.$notify({ text: err.response.data.message, type: 'error'});
-                })
-            }
-        },
-        editComment(comment) {
-            this.comment = "";
-            this.comment = comment.comment;
-            this.editcommentID = comment._id;
         },
         format(date) {
             let month = date.toLocaleString("en-US", { month: 'short' })
@@ -736,29 +608,6 @@ export default {
                 });
             }
         },
-        submitComment() {
-            if(this.editcommentID) {
-                this.$http.patch('comment/'+this.editcommentID, {comment: this.comment})
-                .then(res=>{
-                    // console.log(res.data);
-                    /* events api will update*/
-                    // this.comments[this.editcommentIndex] = res.data;
-                    this.comment = "";
-                    this.editcommentID = null;
-                })
-            } else {
-                this.$http.post('comment/project/'+this.project._id, {
-                    comment : this.comment
-                }).then(res=>{
-                    console.log(res.data);
-                    // Vue.set(this.comments, this.comments.length, res.data);
-                    this.comment = "";
-                }).catch(err=>{
-                    console.error(err);
-                    this.$notify({ text: err.response.data.message, type: 'error'});
-                })
-            }
-        },
 
         openResource(resource) {
             console.log("trying to open", resource);
@@ -805,12 +654,6 @@ export default {
                             key: "project.update.*."+projectId,
                         }
                     }));
-                    this.ws.send(JSON.stringify({
-                        bind: {
-                            ex: "warehouse",
-                            key: "comment_project.*.*."+projectId,
-                        }
-                    }));
                     this.ws.onmessage = (json)=>{
                         let event = JSON.parse(json.data);
                         if(event.dinfo.routingKey.startsWith("project.")) {
@@ -821,11 +664,6 @@ export default {
                                     else this.project[k] = event.msg[k];
                                 }
                             }
-                        }
-                        if(event.dinfo.routingKey.startsWith("comment_project.")) {
-                            const comment = this.comments.find(c=>c._id == event.msg._id);
-                            if(!comment) this.comments.push(event.msg);
-                            else Object.assign(comment, event.msg);
                         }
                     }
                 }
@@ -956,15 +794,6 @@ export default {
             default: return "dark";
             }
         },
-
-        loadXNATObjects() {
-            this.$root.$emit("loading",{message: "Loading XNAT Objects"});
-            this.$http.post("/xnat/load/"+this.project._id).then(res=>{
-                this.$root.$emit("loading", {show: false});
-                this.$notify({ text: "Loaded "+res.data.length+" objects" });
-                console.dir(res);
-            });
-        },
     },
 }
 </script>
@@ -1090,23 +919,6 @@ p.info .fa-icon {
     .main {
         margin-right: 20px;
     }
-}
-#commentEditor {
-    height: 100px;
-}
-.commentbox {
-    background-color: #ffffff;
-    border-radius: 6px;
-    margin: 5px;
-}
-.comcontent {
-    margin: 8px;
-}
-.comment-removed {
-    opacity: 0.8;
-    margin: 10px 0;
-    padding: 10px;
-    background-color: #eee;
 }
 .resource {
     cursor: pointer;

@@ -50,6 +50,19 @@
             <br>
         </div>
 
+        <div v-if="organizations.length && resourcesWithOrg.length">
+            <h4 class="header-sticky"><b-container>Organization Resources</b-container></h4> 
+            <b-container>
+                <template v-for="organization in organizations">
+                    <br>
+                    <h6>{{organization.name}}</h6>
+                    <resource v-for="resource in resourcesWithOrg.filter(r=>r.organization == organization._id)" :key="resource._id" class="resource" :resource="resource"/>
+                </template>
+            </b-container>
+            <br>
+            <br>
+        </div>
+
         <b-button v-if="config.hasRole('resource.create', 'amaretti')" class="button-fixed" @click="newresource">
             New Resource
         </b-button>
@@ -92,6 +105,8 @@ export default {
             
             //editing: false, 
             config: Vue.config,
+            organizations: [],
+            resourcesWithOrg: [],
         }
     },
 
@@ -103,13 +118,15 @@ export default {
 
         this.$http.get(Vue.config.amaretti_api+'/resource', {params: {
             find: JSON.stringify(find),
-            select: 'resource_id config.desc config.maxtask name citation status status_msg lastok_date active gids stats avatar'
+            select: 'resource_id config.desc config.maxtask name citation status status_msg lastok_date active gids stats avatar organization'
         }}).then(res=>{
             this.resources.mine = [];
             this.resources.shared = [];
             this.resources.public = [];
             const usub = Vue.config.user.sub.toString();
-            res.data.resources.forEach(r=>{
+            this.resourcesWithOrg = res.data.resources.filter(r=>r.organization);
+
+            res.data.resources.filter(resource=>!resource.organization).forEach(r=>{
                 if(r.gids.includes(1)) {
                     //public resource
                     this.resources.public.push(r);
@@ -122,12 +139,25 @@ export default {
                 }
             });
         }).catch(console.error);
+
+        this.loadOrganizations();
     },
 
     methods: {
         newresource() {
             this.$router.push('/resource/_/edit');
         },
+        loadOrganizations() {
+            this.$http.get(Vue.config.auth_api+'/organization', {params: {
+                find: JSON.stringify({ 
+                    removed: false 
+                }),
+            }}).then(res=>{
+                this.organizations = res.data;
+            }, error=>{
+                console.error(error);
+            });
+        }
     }, //methods
 }
 </script>
