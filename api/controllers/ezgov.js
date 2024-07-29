@@ -368,27 +368,26 @@ router.get('/project/:projectId/file/:docId/getText', async (req, res) => {
         const filePath = document.fileUrl;
         const fileExtension = path.extname(filePath).toLowerCase();
 
-        // Check if the file exists
-        fs.access(filePath, fs.constants.F_OK, async (err) => {
-            if (err) {
-                return res.status(404).send('File not found');
-            }
-            let text = '';
-            if (fileExtension === '.docx') {
-                const result = await mammoth.extractRawText({ path: filePath });
-                text = result.value;
-            } else if (fileExtension === '.pdf') {
-                const dataBuffer = await fsPromises.readFile(filePath);
-                const result = await pdf(dataBuffer);
-                text = result.text;
-            } else if (fileExtension === '.txt') {
-                text = await fsPromises.readFile(filePath, 'utf8');
-            } else {
-                return res.status(400).send('Unsupported file type. Only .docx, .pdf, and .txt files are supported for text extraction.');
-            }
-            if(text.length) return res.status(200).send(text);
-            else return res.status(400).send("Empty File");
-        });
+        fs.accessSync(filePath,fs.constants.F_OK);
+
+        let text= "";
+        if (fileExtension === '.docx') {
+            const result = await mammoth.extractRawText({ path: filePath });
+            text = result.value;
+        }
+
+        if (fileExtension === '.pdf') {
+            const dataBuffer = await fsPromises.readFile(filePath); 
+            const result = pdf(dataBuffer);
+            text = (await result).text 
+        }
+
+        if (fileExtension === ".txt") {
+            text = await fsPromises.readFile(filePath, 'utf8');
+        }
+
+        if(text.length) return res.status(200).send(text);
+        else return res.status(400).send("Unsupported File / Empty Text");
     } catch (err) {
         console.error('Internal server error:', err);
         return res.status(500).send('Internal server error');
