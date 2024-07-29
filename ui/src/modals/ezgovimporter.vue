@@ -62,7 +62,7 @@ export default {
           const response = await axios.get(`ezgov/project/${this.selectedProject._id}/file/${this.selectedDocument._id}/getText`);
           this.$emit('importedText', response.data);
         } catch (error) {
-          console.error('Error importing document:', error);
+          this.$notify({ text: 'Error Parsing the File '+error , type: 'error' });
         }
       }
     }
