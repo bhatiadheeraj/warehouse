@@ -9,10 +9,15 @@
     </b-form-group>
 
     <b-form-group label="Select Document" v-if="selectedProject">
-      <b-form-select v-model="selectedDocument" :options="documentOptions">
+      <b-form-select v-model="selectedDocument">
         <template #first>
           <option :value="null" disabled>Select Document</option>
         </template>
+        <optgroup v-for="(docs, type) in groupedDocumentOptions" :label="type" :key="type">
+          <option v-for="doc in docs" :key="doc.value._id" :value="doc.value" :disabled="doc.disabled">
+            {{ doc.text }}
+          </option>
+        </optgroup>
       </b-form-select>
     </b-form-group>
   </b-modal>
@@ -33,15 +38,23 @@ export default {
     projectOptions() {
       return this.projects.map(project => ({ value: project, text: project.title }));
     },
-    documentOptions() {
+    groupedDocumentOptions() {
       if (this.selectedProject) {
-        return this.selectedProject.documents.map(doc => {
+        const groups = {};
+        this.selectedProject.documents.forEach(doc => {
           const fileExtension = doc.fileName.split('.').pop().toLowerCase();
           const isSupported = ['txt', 'pdf', 'docx'].includes(fileExtension);
-          return { value: doc, text: doc.fileName, disabled: !isSupported };
+          const groupName = doc.type || 'Other';
+
+          if (!groups[groupName]) {
+            groups[groupName] = [];
+          }
+
+          groups[groupName].push({ value: doc, text: doc.fileName, disabled: !isSupported });
         });
+        return groups;
       }
-      return [];
+      return {};
     }
   },
   methods: {
@@ -62,7 +75,7 @@ export default {
           const response = await axios.get(`ezgov/project/${this.selectedProject._id}/file/${this.selectedDocument._id}/getText`);
           this.$emit('importedText', response.data);
         } catch (error) {
-          this.$notify({ text: 'Error Parsing the File '+error , type: 'error' });
+          this.$notify({ text: 'Error Parsing the File: ' + error, type: 'error' });
         }
       }
     }
@@ -72,3 +85,7 @@ export default {
   }
 };
 </script>
+
+<style scoped>
+/* Add any custom styles here */
+</style>
