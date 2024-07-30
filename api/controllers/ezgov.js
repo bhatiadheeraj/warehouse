@@ -226,14 +226,14 @@ router.post('/upload/:projectId', upload.any(), common.jwt(), async (req, res) =
             }
 
             // Create a new document record
-            const document = {
+            const document = await new db.Document({
                 fileUrl: `/mnt/ezgov/upload/${projectId}/${file.originalname}`,
                 fileName: file.originalname,
                 uploadedBy: mongoose.Types.ObjectId(userId) ,
                 type: type,
                 lifecycle: lifecycle ? lifecycle.split(',') : [],
                 tags: tags ? tags.split(',') : [],
-            };
+            }).save();
 
             documents.push(document);
         }
