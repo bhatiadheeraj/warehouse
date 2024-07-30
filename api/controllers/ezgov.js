@@ -287,20 +287,16 @@ router.put('/project/:id/document/:docId', common.jwt(), async (req, res) => {
             return res.status(403).json({ message: 'Forbidden: Only admins can update documents' });
         }
 
-        // Find the document by ID within the project
         const document = project.documents.id(docId);
         if (!document) {
             return res.status(404).json({ message: 'Document not found' });
         }
 
-        console.log(updateData);
 
-        // Update the document with the provided data
         Object.keys(updateData).forEach(key => {
             document[key] = updateData[key];
         });
 
-        // Save the project with the updated document
         await project.save();
 
         res.status(200).json({ message: 'Document updated successfully', document });
@@ -311,8 +307,6 @@ router.put('/project/:id/document/:docId', common.jwt(), async (req, res) => {
 });
 
 const checkProjectAccess = async (project, userID) => {
-
-    console.log(project);
 
     const isMemberOrAdmin = project.members.some(member => member._id.toString() == userID);
     if (!isMemberOrAdmin) {
@@ -350,10 +344,13 @@ router.get('/project/:projectId/file/:docId', async (req, res) => {
 });
 
 
-router.get('/project/:projectId/file/:docId/getText', async (req, res) => {
+router.get('/project/:projectId/file/:docId/getText', common.jwt(), async (req, res) => {
+
     const projectId = req.params.projectId;
     const docId = req.params.docId;
     const project = await db.ezGovProjects.findById(projectId);
+
+    await checkProjectAccess(project, req.user.id);
     
     if (!project) {
         return res.status(404).send('Project not found');
@@ -394,7 +391,14 @@ router.get('/project/:projectId/file/:docId/getText', async (req, res) => {
     }
 });
 
-
+router.get("/templates", common.jwt({ credentialsRequired: false }), async (req, res) => {
+    let find = {};
+    let select = "";
+    if (req.query.select) select += req.query.select;
+    if(req.query.find) find = JSON.parse(req.query.find); 
+    const templates = await db.Templates.find(find).select(select).lean()
+    return res.json(templates);
+});
 
 module.exports = router;
 

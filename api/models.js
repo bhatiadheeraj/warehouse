@@ -912,9 +912,9 @@ const templateSchema = mongoose.Schema({
     type: String,
     description: String,
     sections: [sectionSchema],
-    createdBy: String,
+    createdBy: {type: mongoose.Schema.Types.ObjectId},
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now }
 });
 
-exports.Template = mongoose.model('Template', templateSchema);
+exports.Templates = mongoose.model('Template', templateSchema);
