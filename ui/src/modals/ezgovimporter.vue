@@ -42,15 +42,17 @@ export default {
       if (this.selectedProject) {
         const groups = {};
         this.selectedProject.documents.forEach(doc => {
-          const fileExtension = doc.fileName.split('.').pop().toLowerCase();
-          const isSupported = ['txt', 'pdf', 'docx'].includes(fileExtension);
-          const groupName = doc.type || 'Other';
+          if(doc.type === 'DUA') {
+            const fileExtension = doc.fileName.split('.').pop().toLowerCase();
+            const isSupported = ['txt', 'pdf', 'docx'].includes(fileExtension);
+            const groupName = doc.type || 'Other';
 
-          if (!groups[groupName]) {
-            groups[groupName] = [];
+            if (!groups[groupName]) {
+              groups[groupName] = [];
+            }
+
+            groups[groupName].push({ value: doc, text: doc.fileName, disabled: !isSupported });
           }
-
-          groups[groupName].push({ value: doc, text: doc.fileName, disabled: !isSupported });
         });
         return groups;
       }

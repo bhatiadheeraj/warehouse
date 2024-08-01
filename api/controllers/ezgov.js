@@ -16,6 +16,7 @@ const fs = require('fs');
 const fsPromises = fs.promises;
 const pdf = require('pdf-parse');
 const mammoth = require("mammoth");
+const { validateHeaderName } = require('http');
 
 /**
  * @apiGroup Project
@@ -191,17 +192,18 @@ const upload = multer({ dest: '/mnt/ezgov/temp/' }); // Temporary upload directo
 router.post('/upload/:projectId', upload.any(), common.jwt(), async (req, res) => {
     const projectId = req.params.projectId;
     const userId = req.user.id; 
-    const { type, lifecycle, tags, template } = req.body;
+    const files = req.files;
+    const { types, lifecycles, tags, templates, uploadedBy } = req.body;
 
-    if (!req.files || req.files.length === 0) {
+    if (!files || files.length === 0) {
         return res.status(400).send('No files were uploaded.');
     }
 
     try {
         let documents = [];
 
-        for (let i = 0; i < req.files.length; i++) {
-            const file = req.files[i];
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
             const src_path = file.path;
             const dest_path = path.resolve(`/mnt/ezgov/upload/${projectId}/${file.originalname}`);
             
@@ -229,10 +231,10 @@ router.post('/upload/:projectId', upload.any(), common.jwt(), async (req, res) =
             const document = await new db.Document({
                 fileUrl: `/mnt/ezgov/upload/${projectId}/${file.originalname}`,
                 fileName: file.originalname,
-                uploadedBy: mongoose.Types.ObjectId(userId) ,
-                type: type,
-                lifecycle: lifecycle ? lifecycle.split(',') : [],
-                tags: tags ? tags.split(',') : [],
+                uploadedBy: mongoose.Types.ObjectId(uploadedBy[i]), // Note the change here
+                type: types[i], 
+                lifecycle: lifecycles[i] ? lifecycles[i].split(',') : [],                
+                tags: [],
             }).save();
 
             documents.push(document);
@@ -269,7 +271,36 @@ router.get('/project/:id/document/:docId', common.jwt(), async(req,res) => {
         console.error(error);
         res.status(500).json({ message: 'Internal Server Error', error: error.message });
     }
-})
+});
+
+router.post('/project/:id/document', common.jwt(), async (req, res) => {
+    try {
+        const projectId = req.params.id;
+
+        let project = await db.ezGovProjects.findById(projectId);
+        await checkProjectAccess(project, req.user.id);
+
+        const documentData = req.body;
+        await validateDocumentData(documentData, db);
+
+        const newDocument = new db.Document(documentData);
+        await newDocument.save();
+
+        //TODO: only upload ID;
+        project.documents.push(newDocument);
+        await project.save();
+
+        res.status(201).json({ message: 'Document created successfully', document: newDocument });
+    } catch (error) {
+        console.error(error);
+        if (error.message.includes('Missing') || error.message.includes('Invalid') || error.message.includes('response')) {
+            res.status(400).json({ message: error.message });
+        } else {
+            res.status(500).json({ message: 'Internal Server Error', error: error.message });
+        }
+    }
+});
+
 
 router.put('/project/:id/document/:docId', common.jwt(), async (req, res) => {
     try {
@@ -316,7 +347,46 @@ const checkProjectAccess = async (project, userID) => {
     return project;
 };
 
-// Route to serve files
+const validateDocumentData = async (document, db) => {
+    try {
+        if (!document.fileName) {
+            throw new Error('Missing File Name');
+        }
+
+        if (!document.template) {
+            throw new Error('Missing Template');
+        }
+
+        const template = await db.Templates.findById(document.template);
+        if (!template) {
+            throw new Error('Invalid Template ID');
+        }
+
+        const fieldMap = new Map();
+        template.sections.forEach(section => {
+            section.fields.forEach(field => {
+                fieldMap.set(field._id.toString(), field);
+            });
+        });
+
+        for (let response of document.responses) {
+            const field = fieldMap.get(response.fieldId.toString());
+            if (!field) {
+                throw new Error(`Invalid Field ID: ${response.fieldId}`);
+            }
+
+            // if (field.required && (response.response === null || response.response === undefined || response.response === '')) {
+            //     // should I allow to save without finishing the required fields ?
+            //     // throw new Error(`Missing response for required field: ${field.label}`);
+            // }
+        }
+
+    } catch (exception) {
+        throw exception;
+    }
+};
+
+
 router.get('/project/:projectId/file/:docId', async (req, res) => {   
 
     const projectId = req.params.projectId;

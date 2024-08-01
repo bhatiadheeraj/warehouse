@@ -866,6 +866,8 @@ const documentSchema = mongoose.Schema({
     fileName: String,
     uploadedBy: { type: mongoose.Schema.Types.ObjectId },
     uploadDate: { type: Date, default: Date.now },
+    createDate: {type: Date, default: Date.now},
+    createdBy: { type: mongoose.Schema.Types.ObjectId }, // how about just using author and keeping uploadedBy 
     type: String,
     lifecycle: [String],
     tags: [String],
@@ -884,7 +886,7 @@ const ezGovProjectSchema = mongoose.Schema({
     fundingOpportunityURL: String,
     createdBy: String,
     members: [memberSchema],
-    documents: [documentSchema]
+    documents: [documentSchema] // TODO : change to just use ids
 });
 
 exports.ezGovProjects = mongoose.model('ezGovProjects', ezGovProjectSchema);
