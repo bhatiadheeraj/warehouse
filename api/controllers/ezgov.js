@@ -169,7 +169,7 @@ router.get('/projects', common.jwt(), async (req, res) => {
 router.get('/project/:id', common.jwt(), async (req, res) => {
     try {
         const projectId = req.params.id;
-        const project = await db.ezGovProjects.findById(projectId);
+        const project = await db.ezGovProjects.findById(projectId.toString());
         if (!project) {
             return res.status(404).json({ message: 'Project not found' });
         }
@@ -179,8 +179,21 @@ router.get('/project/:id', common.jwt(), async (req, res) => {
             return res.status(403).json({ message: 'Forbidden: Only project members or admins can access this project' });
         }
 
-        res.status(200).json(project);
+        const projectObj = project.toObject ? project.toObject() : project;
+
+        console.log("Error not here");
+
+        await Promise.all(projectObj.documents.map(async (document) => {
+            if (document.template) {
+                console.log(document.template);
+                const template = await db.Templates.findById(document.template);
+                if (!template) console.error(`Template not found for document ID: ${document._id}`);
+                else document.templateName = template.name;
+            }
+        }));
+        res.status(200).json(projectObj);
     } catch (error) {
+        console.error(error);
         res.status(500).json({ message: 'Internal Server Error', error: error.message });
     }
 });
@@ -225,20 +238,17 @@ router.post('/upload/:projectId', upload.any(), common.jwt(), async (req, res) =
                 return res.status(500).send("Error moving file.");
             }
 
-            // Create a new document record
-            const document = {
-                fileUrl: `/mnt/ezgov/upload/${projectId}/${file.originalname}`,
+            const document = await new db.Document({
+                fileUrl: dest_path,
                 fileName: file.originalname,
-                uploadedBy: mongoose.Types.ObjectId(userId) ,
-                type: type,
-                lifecycle: lifecycle ? lifecycle.split(',') : [],
-                tags: tags ? tags.split(',') : [],
-            };
+                uploadedBy: mongoose.Types.ObjectId(uploadedBys[i]),
+                type: types[i], 
+                lifecycle: lifecycles[i].split(','), 
+            }).save();
 
             documents.push(document);
         }
 
-        // Update the project with the new documents
         await db.ezGovProjects.findByIdAndUpdate(
             projectId,
             { $push: { documents: { $each: documents } } },
@@ -269,7 +279,37 @@ router.get('/project/:id/document/:docId', common.jwt(), async(req,res) => {
         console.error(error);
         res.status(500).json({ message: 'Internal Server Error', error: error.message });
     }
-})
+});
+
+
+router.post('/project/:id/document', common.jwt(), async (req, res) => {
+    try {
+        const projectId = req.params.id;
+
+        let project = await db.ezGovProjects.findById(projectId);
+        await checkProjectAccess(project, req.user.id);
+
+        const documentData = req.body;
+        await validateDocumentData(documentData, db);
+
+        const newDocument = new db.Document(documentData);
+        await newDocument.save();
+
+        //TODO: only upload ID;
+        project.documents.push(newDocument);
+        await project.save();
+
+        res.status(201).json({ message: 'Document created successfully', document: newDocument });
+    } catch (error) {
+        console.error(error);
+        if (error.message.includes('Missing') || error.message.includes('Invalid') || error.message.includes('response')) {
+            res.status(400).json({ message: error.message });
+        } else {
+            res.status(500).json({ message: 'Internal Server Error', error: error.message });
+        }
+    }
+});
+
 
 router.put('/project/:id/document/:docId', common.jwt(), async (req, res) => {
     try {
@@ -332,13 +372,11 @@ router.get('/project/:projectId/file/:docId', async (req, res) => {
     const document = project.documents.id(docId);
     const filePath = document.fileUrl;
 
-    // Check if the file exists
     fs.access(filePath, fs.constants.F_OK, (err) => {
         if (err) {
             return res.status(404).send('File not found');
         }
 
-        // Serve the file
         res.sendFile(filePath, (err) => {
             if (err) {
                 console.error('Error serving file:', err);
