@@ -430,7 +430,14 @@ router.get('/project/:projectId/file/:docId/getText', async (req, res) => {
     }
 });
 
-
+router.get("/templates", common.jwt({ credentialsRequired: false }), async (req, res) => {
+    let find = {};
+    let select = "";
+    if (req.query.select) select += req.query.select;
+    if(req.query.find) find = JSON.parse(req.query.find); 
+    const templates = await db.Templates.find(find).select(select).lean()
+    return res.json(templates);
+});
 
 module.exports = router;
 
