@@ -2,8 +2,6 @@
 
 const express = require('express');
 const router = express.Router();
-const async = require('async');
-const config = require('../config');
 const db = require('../models');
 const common = require('../common');
 const multer = require('multer');
@@ -14,7 +12,6 @@ const fs = require('fs');
 const fsPromises = fs.promises;
 const pdf = require('pdf-parse');
 const mammoth = require("mammoth");
-const { validateHeaderName } = require('http');
 
 /**
  * @apiGroup Project
@@ -75,6 +72,7 @@ router.post('/project', common.jwt(), async (req, res) => {
 
         res.status(200).json(savedProject);
     } catch (error) {
+        console.log(error);
         res.status(500).json({ message: 'Internal Server Error', error: error.message });
     }
 });
@@ -168,7 +166,8 @@ router.get('/projects', common.jwt(), async (req, res) => {
 router.get('/project/:id', common.jwt(), async (req, res) => {
     try {
         const projectId = req.params.id;
-        const project = await db.ezGovProjects.findById(projectId);
+        const project = await db.ezGovProjects.findById(projectId).populate('documents');
+        console.log(project)
         if (!project) {
             return res.status(404).json({ message: 'Project not found' });
         }
@@ -199,7 +198,7 @@ const upload = multer({ dest: '/mnt/ezgov/temp/' }); // Temporary upload directo
 router.post('/upload/:projectId', upload.any(), common.jwt(), async (req, res) => {
     const projectId = req.params.projectId;
     const files = req.files;
-    const { types, lifecycles, uploadedBys } = req.body;
+    const { types, lifecycles, authors } = req.body;
 
     if (!files || files.length === 0) {
         return res.status(400).send('No files were uploaded.');
@@ -221,7 +220,7 @@ router.post('/upload/:projectId', upload.any(), common.jwt(), async (req, res) =
             const document = await new db.Document({
                 fileUrl: dest_path,
                 fileName: file.originalname,
-                uploadedBy: mongoose.Types.ObjectId(uploadedBys[i]),
+                author: mongoose.Types.ObjectId(authors[i]),
                 type: types[i], 
                 lifecycle: lifecycles[i].split(','), 
             }).save();
@@ -231,7 +230,7 @@ router.post('/upload/:projectId', upload.any(), common.jwt(), async (req, res) =
 
         await db.ezGovProjects.findByIdAndUpdate(
             projectId,
-            { $push: { documents: { $each: documents } } },
+            { $push: { documents: { $each: documents.map(doc => doc._id) } } },  // Only push document IDs
             { new: true }
         );
 
@@ -250,11 +249,10 @@ router.get('/project/:id/document/:docId', common.jwt(), async(req,res) => {
 
         const project = await db.ezGovProjects.findById(projectId);
         await checkProjectAccess(project, req.user.id);
-        const document = project.documents.id(docId);
-
-        if(document) res.status(200).json(document);
-        else res.status(404).json({message: "Document not Found"});
-       
+        if(!project.documents.includes(docId)) res.status(400).json({message: 'Document not part of the project'});       
+        const document = await db.Document.findById(docId);
+        if(!document) res.status(404).json({message: "Document not Found"});
+        res.status(200).json(document);       
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Internal Server Error', error: error.message });
@@ -274,8 +272,7 @@ router.post('/project/:id/document', common.jwt(), async (req, res) => {
         const newDocument = new db.Document(documentData);
         await newDocument.save();
 
-        //TODO: only upload ID;
-        project.documents.push(newDocument);
+        project.documents.push(newDocument._id);
         await project.save();
 
         res.status(201).json({ message: 'Document created successfully', document: newDocument });
@@ -306,10 +303,11 @@ router.put('/project/:id/document/:docId', common.jwt(), async (req, res) => {
             return res.status(403).json({ message: 'Forbidden: Only admins can update documents' });
         }
 
-        const document = project.documents.id(docId);
-        if (!document) {
+        if (!project.documents.includes(docId)) {
             return res.status(404).json({ message: 'Document not found' });
         }
+
+        let document = await db.Document.findById(docId);
 
         if(document.template) validateDocumentData(document, db)
 
@@ -317,7 +315,7 @@ router.put('/project/:id/document/:docId', common.jwt(), async (req, res) => {
             document[key] = updateData[key];
         });
 
-        await project.save();
+        await document.save();
 
         res.status(200).json({ message: 'Document updated successfully', document });
     } catch (error) {
@@ -354,9 +352,9 @@ const validateDocumentData = async (document, db) => {
             throw new Error('Missing Template');
         }
 
-        if(!document.uploadedBy) {
-            throw new Error('Missing ID of uploaded /author');
-        } //TODO: Change to author
+        if(!document.author) {
+            throw new Error('Missing ID of author');
+        } 
 
         const template = await db.Templates.findById(document.template);
         if (!template) {
@@ -394,7 +392,8 @@ router.get('/project/:projectId/file/:docId', async (req, res) => {
     const docId = req.params.docId;
 
     const project = await db.ezGovProjects.findById(projectId);
-    const document = project.documents.id(docId);
+    if(!project.documents.includes(docId)) res.status(400).message("Document does not exist in the Project");
+    const document = await db.Document.findById(docId);
     const filePath = document.fileUrl;
 
     fs.access(filePath, fs.constants.F_OK, (err) => {
@@ -418,18 +417,15 @@ router.get('/project/:projectId/file/:docId/getText', common.jwt(), async (req, 
     const projectId = req.params.projectId;
     const docId = req.params.docId;
     const project = await db.ezGovProjects.findById(projectId);
-
     await checkProjectAccess(project, req.user.id);
     
     if (!project) {
         return res.status(404).send('Project not found');
     }
 
-    const document = project.documents.id(docId);
-    if (!document) {
-        return res.status(404).send('Document not found');
-    }
-
+    if(!project.documents.includes(docId)) res.status(400).message("Document does not exist in the Project");
+    const document = await db.Document.findById(docId);
+  
     if(document.template) {
         let text = "";
         const template = await db.Templates.findById(document.template);

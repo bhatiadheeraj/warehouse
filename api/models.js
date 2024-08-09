@@ -864,15 +864,14 @@ const memberSchema = mongoose.Schema({
 const documentSchema = mongoose.Schema({
     fileUrl: String,
     fileName: String,
-    uploadedBy: { type: mongoose.Schema.Types.ObjectId },
     uploadDate: { type: Date, default: Date.now },
-    createDate: {type: Date, default: Date.now},
-    createdBy: { type: mongoose.Schema.Types.ObjectId }, // how about just using author and keeping uploadedBy 
+    author: { type: mongoose.Schema.Types.ObjectId },
     type: String,
     lifecycle: [String],
     tags: [String],
     template: { type: mongoose.Schema.Types.ObjectId, ref: 'Template' },
-    responses: [responseSchema]
+    responses: [responseSchema], 
+    //lastUpdated: TODO ask if needed in future @anibalsolon?
 });
 
 exports.Document = mongoose.model('Document', documentSchema);
@@ -886,7 +885,9 @@ const ezGovProjectSchema = mongoose.Schema({
     fundingOpportunityURL: String,
     createdBy: String,
     members: [memberSchema],
-    documents: [documentSchema] // TODO : change to just use ids
+    documents: [
+        { type: mongoose.Schema.Types.ObjectId, ref: 'Document' }
+    ] 
 });
 
 exports.ezGovProjects = mongoose.model('ezGovProjects', ezGovProjectSchema);
