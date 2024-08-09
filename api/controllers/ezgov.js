@@ -181,11 +181,8 @@ router.get('/project/:id', common.jwt(), async (req, res) => {
 
         const projectObj = project.toObject ? project.toObject() : project;
 
-        console.log("Error not here");
-
         await Promise.all(projectObj.documents.map(async (document) => {
             if (document.template) {
-                console.log(document.template);
                 const template = await db.Templates.findById(document.template);
                 if (!template) console.error(`Template not found for document ID: ${document._id}`);
                 else document.templateName = template.name;
