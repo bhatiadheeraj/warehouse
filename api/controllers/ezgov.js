@@ -3,8 +3,6 @@
 const express = require('express');
 const router = express.Router();
 const async = require('async');
-
-
 const config = require('../config');
 const db = require('../models');
 const common = require('../common');
@@ -262,7 +260,6 @@ router.get('/project/:id/document/:docId', common.jwt(), async(req,res) => {
         res.status(500).json({ message: 'Internal Server Error', error: error.message });
     }
 });
-
 
 router.post('/project/:id/document', common.jwt(), async (req, res) => {
     try {
