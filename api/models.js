@@ -872,6 +872,7 @@ const documentSchema = mongoose.Schema({
     template: { type: mongoose.Schema.Types.ObjectId, ref: 'Template' },
     responses: [responseSchema], 
     //lastUpdated: TODO ask if needed in future @anibalsolon?
+    removed: Boolean
 });
 
 exports.Document = mongoose.model('Document', documentSchema);
