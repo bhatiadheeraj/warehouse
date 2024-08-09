@@ -849,6 +849,12 @@ var commentSchema = mongoose.Schema({
 
 exports.Comments = mongoose.model('Comments', commentSchema);
 
+
+const responseSchema = mongoose.Schema({
+    fieldId: { type: mongoose.Schema.Types.ObjectId },
+    response: mongoose.Schema.Types.Mixed
+});
+
 const memberSchema = mongoose.Schema({
     role: String, /* admin / member*/
     position: String, /* PI / SDE / RA/ */
@@ -858,17 +864,19 @@ const memberSchema = mongoose.Schema({
 const documentSchema = mongoose.Schema({
     fileUrl: String,
     fileName: String,
-    uploadedBy: {type: mongoose.Schema.Types.ObjectId},                                          
-    uploadDate: { type: Date, default: Date.now},
+    uploadedBy: { type: mongoose.Schema.Types.ObjectId },
+    uploadDate: { type: Date, default: Date.now },
+    createDate: {type: Date, default: Date.now},
+    createdBy: { type: mongoose.Schema.Types.ObjectId }, // how about just using author and keeping uploadedBy 
     type: String,
     lifecycle: [String],
-    tags: [{ type: String }],
-    template: { type: mongoose.Schema.Types.ObjectId, ref: 'Template'},
-    responses: {    
-    } 
+    tags: [String],
+    template: { type: mongoose.Schema.Types.ObjectId, ref: 'Template' },
+    responses: [responseSchema]
 });
 
-// Define the ezGovProject schema
+exports.Document = mongoose.model('Document', documentSchema);
+
 const ezGovProjectSchema = mongoose.Schema({
     title: String,
     description: String,
@@ -878,7 +886,37 @@ const ezGovProjectSchema = mongoose.Schema({
     fundingOpportunityURL: String,
     createdBy: String,
     members: [memberSchema],
-    documents: [documentSchema]
+    documents: [documentSchema] // TODO : change to just use ids
 });
 
 exports.ezGovProjects = mongoose.model('ezGovProjects', ezGovProjectSchema);
+
+const fieldSchema = mongoose.Schema({
+    _id: { type: mongoose.Schema.Types.ObjectId, auto: true },
+    label: String,
+    description: String,
+    type: String,
+    required: Boolean,
+    options: [String],
+    suggestions: [String],
+    default: String
+});
+
+const sectionSchema = mongoose.Schema({
+    _id: { type: mongoose.Schema.Types.ObjectId, auto: true },
+    title: String,
+    fields: [fieldSchema]
+});
+
+const templateSchema = mongoose.Schema({
+    name: String,
+    source: String,
+    type: String,
+    description: String,
+    sections: [sectionSchema],
+    createdBy: {type: mongoose.Schema.Types.ObjectId},
+    createdAt: { type: Date, default: Date.now },
+    updatedAt: { type: Date, default: Date.now }
+});
+
+exports.Templates = mongoose.model('Template', templateSchema);
