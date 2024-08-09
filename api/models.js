@@ -872,7 +872,7 @@ const documentSchema = mongoose.Schema({
     template: { type: mongoose.Schema.Types.ObjectId, ref: 'Template' },
     responses: [responseSchema], 
     //lastUpdated: TODO ask if needed in future @anibalsolon?
-    removed: Boolean
+    removed: { type: Boolean, default: false },
 });
 
 exports.Document = mongoose.model('Document', documentSchema);
@@ -888,7 +888,8 @@ const ezGovProjectSchema = mongoose.Schema({
     members: [memberSchema],
     documents: [
         { type: mongoose.Schema.Types.ObjectId, ref: 'Document' }
-    ] 
+    ],
+    removed: { type: Boolean, default: false }, 
 });
 
 exports.ezGovProjects = mongoose.model('ezGovProjects', ezGovProjectSchema);
@@ -918,7 +919,8 @@ const templateSchema = mongoose.Schema({
     sections: [sectionSchema],
     createdBy: {type: mongoose.Schema.Types.ObjectId},
     createdAt: { type: Date, default: Date.now },
-    updatedAt: { type: Date, default: Date.now }
+    updatedAt: { type: Date, default: Date.now },
+    removed: { type: Boolean, default: false },
 });
 
 exports.Templates = mongoose.model('Template', templateSchema);
