@@ -16,6 +16,7 @@ const fs = require('fs');
 const fsPromises = fs.promises;
 const pdf = require('pdf-parse');
 const mammoth = require("mammoth");
+const { validateHeaderName } = require('http');
 
 /**
  * @apiGroup Project
@@ -169,7 +170,7 @@ router.get('/projects', common.jwt(), async (req, res) => {
 router.get('/project/:id', common.jwt(), async (req, res) => {
     try {
         const projectId = req.params.id;
-        const project = await db.ezGovProjects.findById(projectId.toString());
+        const project = await db.ezGovProjects.findById(projectId);
         if (!project) {
             return res.status(404).json({ message: 'Project not found' });
         }
@@ -190,50 +191,34 @@ router.get('/project/:id', common.jwt(), async (req, res) => {
         }));
         res.status(200).json(projectObj);
     } catch (error) {
-        console.error(error);
+        console.error('Internal Server Error', error);
         res.status(500).json({ message: 'Internal Server Error', error: error.message });
     }
 });
 
 // Set up Multer for file uploads
 const upload = multer({ dest: '/mnt/ezgov/temp/' }); // Temporary upload directory
-
 router.post('/upload/:projectId', upload.any(), common.jwt(), async (req, res) => {
     const projectId = req.params.projectId;
-    const userId = req.user.id; 
-    const { type, lifecycle, tags, template } = req.body;
+    const files = req.files;
+    const { types, lifecycles, uploadedBys } = req.body;
 
-    if (!req.files || req.files.length === 0) {
+    if (!files || files.length === 0) {
         return res.status(400).send('No files were uploaded.');
     }
 
     try {
         let documents = [];
 
-        for (let i = 0; i < req.files.length; i++) {
-            const file = req.files[i];
-            const src_path = file.path;
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
             const dest_path = path.resolve(`/mnt/ezgov/upload/${projectId}/${file.originalname}`);
-            
-            console.log(`Source path: ${src_path}`);
-            console.log(`Destination path: ${dest_path}`);
-
-            if (!dest_path.startsWith('/mnt/ezgov/upload')) {
-                return res.status(400).send("Invalid path: " + dest_path);
-            }
 
             const destdir = path.dirname(dest_path);
-            console.log(`Destination directory: ${destdir}`);
-
             mkdirp.sync(destdir);
-
+            
             // Move the file from temp to the destination directory
-            try {
-                fs.renameSync(src_path, dest_path);
-            } catch (err) {
-                console.error(`Error moving file from ${src_path} to ${dest_path}`, err);
-                return res.status(500).send("Error moving file.");
-            }
+            fs.renameSync(file.path, dest_path);
 
             const document = await new db.Document({
                 fileUrl: dest_path,
@@ -249,7 +234,7 @@ router.post('/upload/:projectId', upload.any(), common.jwt(), async (req, res) =
         await db.ezGovProjects.findByIdAndUpdate(
             projectId,
             { $push: { documents: { $each: documents } } },
-            { new: true, useFindAndModify: false }
+            { new: true }
         );
 
         res.status(200).send(documents);
@@ -324,20 +309,17 @@ router.put('/project/:id/document/:docId', common.jwt(), async (req, res) => {
             return res.status(403).json({ message: 'Forbidden: Only admins can update documents' });
         }
 
-        // Find the document by ID within the project
         const document = project.documents.id(docId);
         if (!document) {
             return res.status(404).json({ message: 'Document not found' });
         }
 
-        console.log(updateData);
+        if(document.template) validateDocumentData(document, db)
 
-        // Update the document with the provided data
         Object.keys(updateData).forEach(key => {
             document[key] = updateData[key];
         });
 
-        // Save the project with the updated document
         await project.save();
 
         res.status(200).json({ message: 'Document updated successfully', document });
@@ -349,8 +331,6 @@ router.put('/project/:id/document/:docId', common.jwt(), async (req, res) => {
 
 const checkProjectAccess = async (project, userID) => {
 
-    console.log(project);
-
     const isMemberOrAdmin = project.members.some(member => member._id.toString() == userID);
     if (!isMemberOrAdmin) {
         return res.status(403).json({ message: 'Forbidden: Only project members or admins can access this project' });
@@ -359,7 +339,58 @@ const checkProjectAccess = async (project, userID) => {
     return project;
 };
 
-// Route to serve files
+const validateDocumentData = async (document, db) => {
+    try {
+        if (!document.fileName) {
+            throw new Error('Missing File Name');
+        }
+
+        if(!document.lifecycle) {
+            throw new Error('Missing Lifecycle')
+        }
+
+        if(!document.type) {
+            throw new Error('Missing Doc Type Field');
+        }
+
+        if (!document.template) {
+            throw new Error('Missing Template');
+        }
+
+        if(!document.uploadedBy) {
+            throw new Error('Missing ID of uploaded /author');
+        } //TODO: Change to author
+
+        const template = await db.Templates.findById(document.template);
+        if (!template) {
+            throw new Error('Invalid Template ID');
+        }
+
+        const fieldMap = new Map();
+        template.sections.forEach(section => {
+            section.fields.forEach(field => {
+                fieldMap.set(field._id.toString(), field);
+            });
+        });
+
+        for (let response of document.responses) {
+            const field = fieldMap.get(response.fieldId.toString());
+            if (!field) {
+                throw new Error(`Invalid Field ID: ${response.fieldId}`);
+            }
+
+            // if (field.required && (response.response === null || response.response === undefined || response.response === '')) {
+            //     // should I allow to save without finishing the required fields ?
+            //     // throw new Error(`Missing response for required field: ${field.label}`);
+            // }
+        }
+
+    } catch (exception) {
+        throw exception;
+    }
+};
+
+
 router.get('/project/:projectId/file/:docId', async (req, res) => {   
 
     const projectId = req.params.projectId;
@@ -385,10 +416,13 @@ router.get('/project/:projectId/file/:docId', async (req, res) => {
 });
 
 
-router.get('/project/:projectId/file/:docId/getText', async (req, res) => {
+router.get('/project/:projectId/file/:docId/getText', common.jwt(), async (req, res) => {
+
     const projectId = req.params.projectId;
     const docId = req.params.docId;
     const project = await db.ezGovProjects.findById(projectId);
+
+    await checkProjectAccess(project, req.user.id);
     
     if (!project) {
         return res.status(404).send('Project not found');
@@ -399,34 +433,55 @@ router.get('/project/:projectId/file/:docId/getText', async (req, res) => {
         return res.status(404).send('Document not found');
     }
 
-    try {
-        const filePath = document.fileUrl;
-        const fileExtension = path.extname(filePath).toLowerCase();
+    if(document.template) {
+        let text = "";
+        const template = await db.Templates.findById(document.template);
+        const responses = document.responses //Array
+        template.sections.forEach((section) => {
+            text += `${section.title}\n\n`;
+            section.fields.forEach((field) => {
+                text += `\n${field.label}(${field.description})\n`;
+                const response = responses.find(resp => resp.fieldId.toString() === field._id.toString());
+                if (response) {
+                    text += `${response.response}\n`;
+                } else {
+                    text += `\n`;
+                }
+            });
+        });
+        if(text.length) return res.status(200).send(text);
+        else return res.status(400).send("Unsupported File / Empty Text");
+    }
 
-        // Check if the file exists
-        fs.access(filePath, fs.constants.F_OK, async (err) => {
-            if (err) {
-                return res.status(404).send('File not found');
-            }
-            let text = '';
+    if(document.fileUrl) {
+        try {
+            const filePath = document.fileUrl;
+            const fileExtension = path.extname(filePath).toLowerCase();
+    
+            fs.accessSync(filePath,fs.constants.F_OK);
+    
+            let text= "";
             if (fileExtension === '.docx') {
                 const result = await mammoth.extractRawText({ path: filePath });
                 text = result.value;
-            } else if (fileExtension === '.pdf') {
-                const dataBuffer = await fsPromises.readFile(filePath);
-                const result = await pdf(dataBuffer);
-                text = result.text;
-            } else if (fileExtension === '.txt') {
-                text = await fsPromises.readFile(filePath, 'utf8');
-            } else {
-                return res.status(400).send('Unsupported file type. Only .docx, .pdf, and .txt files are supported for text extraction.');
             }
+    
+            if (fileExtension === '.pdf') {
+                const dataBuffer = await fsPromises.readFile(filePath); 
+                const result = pdf(dataBuffer);
+                text = (await result).text 
+            }
+    
+            if (fileExtension === ".txt") {
+                text = await fsPromises.readFile(filePath, 'utf8');
+            }
+    
             if(text.length) return res.status(200).send(text);
-            else return res.status(400).send("Empty File");
-        });
-    } catch (err) {
-        console.error('Internal server error:', err);
-        return res.status(500).send('Internal server error');
+            else return res.status(400).send("Unsupported File / Empty Text");
+        } catch (err) {
+            console.error('Internal server error:', err);
+            return res.status(500).send('Internal server error');
+        }
     }
 });
 
@@ -440,4 +495,3 @@ router.get("/templates", common.jwt({ credentialsRequired: false }), async (req,
 });
 
 module.exports = router;
-
