@@ -44,7 +44,8 @@ export default {
         this.selectedProject.documents.forEach(doc => {
           if(doc.type === 'DUA') {
             const fileExtension = doc.fileName.split('.').pop().toLowerCase();
-            const isSupported = ['txt', 'pdf', 'docx'].includes(fileExtension);
+            let isSupported = ['txt', 'pdf', 'docx'].includes(fileExtension);
+            if(doc.template) isSupported = true;
             const groupName = doc.type || 'Other';
 
             if (!groups[groupName]) {

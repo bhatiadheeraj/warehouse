@@ -144,7 +144,11 @@ router.put('/project/:id', common.jwt(), async (req, res) => {
 
 router.get('/projects', common.jwt(), async (req, res) => {
     try {
-        const projects = await db.ezGovProjects.find({ 'members._id': req.user.id });
+        let projects = await db.ezGovProjects.find({ 'members._id': req.user.id });
+        projects = await Promise.all(projects.map(async (project) => {
+            await project.populate('documents');
+            return project;
+        }));
         res.status(200).json(projects);
     } catch (error) {
         res.status(500).json({ message: 'Internal Server Error', error: error.message });

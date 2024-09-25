@@ -916,11 +916,13 @@ const templateSchema = mongoose.Schema({
     source: String,
     type: String,
     description: String,
+    lifecycle: String,
     sections: [sectionSchema],
     createdBy: {type: mongoose.Schema.Types.ObjectId},
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now },
     removed: { type: Boolean, default: false },
+    styles: {type: Object}
 });
 
 exports.Templates = mongoose.model('Template', templateSchema);
